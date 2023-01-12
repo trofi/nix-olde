@@ -123,8 +123,8 @@ fn get_local_available_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalAvail
     match nixpkgs {
         None => {},
         Some(p) => {
-            a = format!("nixpkgs={p}");
-            cmd.extend_from_slice(&["-I", &a]);
+            a = format!("{p}");
+            cmd.extend_from_slice(&["-f", &a]);
         }
     }
     let ps_u8 = run_cmd(&cmd);
