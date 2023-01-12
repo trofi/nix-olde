@@ -28,58 +28,48 @@ fn run_cmd(args: &[&str]) -> Vec<u8> {
     cmd.stdout
 }
 
-#[derive(Deserialize)]
-struct DrvEnv {
-    /// Full not-quite-'pname' + 'version' from package environment.
-    name: Option<String>,
-    /// 'version' attribute from package environment. Most trusted.
-    version: Option<String>,
-}
-
-#[derive(Deserialize)]
-/// Dervivation description with subset of fields needed to detect stale packages.
-struct Drv { env: DrvEnv, }
 
 /// Installed packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 struct LocalInstalledPackage {
+    /// Full not-quite-'pname' + 'version' from package environment.
     name: String,
+    /// 'version' attribute from package environment. Most trusted.
     version: String,
 }
 
 /// Returns list of all used derivations in parsed form.
 // TODO: add parameters like a directory defining nixpkgs path, a system expression.
-// TODO: add handling for packages with 'name' attribute and without 'pname' / 'version'.
 fn get_local_installed_packages() -> BTreeSet<LocalInstalledPackage> {
-    // Run an equivalent of:
-    // $ nix show-derivation -r $(nix-instantiate '<nixpkgs/nixos>' -A system)
-    // {
-    //   "/nix/store/...-python3.10-networkx-2.8.6.drv": {
-    //     "args": [
-    //       "-e",
-    //       "/nix/store/...-default-builder.sh"
-    //     ],
-    //     "builder": "/nix/store/...-bash-5.1-p16/bin/bash",
-    //     "env": {
-    //       "builder": "/nix/store/...-bash-5.1-p16/bin/bash",
-    //       "name": "python3.10-networkx-2.8.6",
-    //       "pname": "networkx",
-    //       "version": "2.8.6"
-    //       ...
-
     // TODO: is there a 'nix' command equivalent?
     let out_u8 = run_cmd(&["nix-instantiate",
                            "<nixpkgs/nixos>",
                            "-A", "system"
                            ]);
-
+    // Returns path to derivation file (and a newline)
     let out_s = String::from_utf8(out_u8).expect("utf8");
     // Have to drop trailing newline.
     let drv_path = out_s.trim();
 
-    // TODO: pass in experimental command flags
+    // TODO: pass in experimental command flags to make it work on
+    // default `nix` installs as well. 
     let drvs_u8 = run_cmd(&["nix", "show-derivation", "-r", drv_path]);
-    let drvs: BTreeMap<String, Drv> = serde_json::from_slice(drvs_u8.as_slice()).expect("valid json");
+    // {
+    //   "/nix/store/...-python3.10-networkx-2.8.6.drv": {
+    //     "env": {
+    //       "name": "python3.10-networkx-2.8.6",
+    //       "pname": "networkx",
+    //       "version": "2.8.6"
+    //       ...
+
+    #[derive(Deserialize)]
+    struct DrvEnv { name: Option<String>, version: Option<String> }
+    #[derive(Deserialize)]
+    /// Dervivation description with subset of fields needed to detect stale packages.
+    struct Installed { env: DrvEnv, }
+
+    let drvs: BTreeMap<String, Installed> =
+        serde_json::from_slice(drvs_u8.as_slice()).expect("valid json");
 
     drvs.iter().filter_map(|(_drv, oenv)|
         match &oenv.env {
@@ -96,13 +86,6 @@ fn get_local_installed_packages() -> BTreeSet<LocalInstalledPackage> {
     ).collect()
 }
 
-#[derive(Deserialize)]
-/// Dervivation description with subset of fields needed to detect stale packages.
-struct Available {
-    name: String,
-    pname: String,
-    version: String,
-}
 
 /// Installed packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -116,35 +99,28 @@ struct LocalAvailablePackage {
 /// Returns list of all available packages in parsed form.
 // TODO: add parameters like a directory defining nixpkgs path, a system expression.
 fn get_local_available_packages() -> BTreeSet<LocalAvailablePackage> {
-    // Run an equivalent of:
-    // $ nix-env -qa --json [TODO maybe --meta?]
-    // "nixos.python310Packages.networkx": {
-    //   "name": "python3.10-networkx-2.8.6",
-    //   "outputName": "out",
-    //   "outputs": {
-    //     "dist": null,
-    //     "out": null
-    //   },
-    //   "pname": "python3.10-networkx",
-    //   "system": "x86_64-linux",
-    //   "version": "2.8.6"
-    // },
-    //
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
-
     let ps_u8 = run_cmd(&["nix-env",
                            "-qa",
                            "--json",
                            "--arg", "config", "import <nixpkgs/pkgs/top-level/packages-config.nix>",
                            "--option", "build-users-group", "\"\"",
                            ]);
+    // "nixos.python310Packages.networkx": {
+    //   "name": "python3.10-networkx-2.8.6",
+    //   "pname": "python3.10-networkx",
+    //   "version": "2.8.6"
+    // },
 
-    let ps: BTreeMap<String, Available> = serde_json::from_slice(ps_u8.as_slice()).expect("valid json");
+    #[derive(Deserialize)]
+    struct Available { name: String, pname: String, version: String }
+
+    let ps: BTreeMap<String, Available> =
+        serde_json::from_slice(ps_u8.as_slice()).expect("valid json");
 
     ps.iter().filter_map(|(attr, a)|
         Some(LocalAvailablePackage{
-            // TODO: remove clones and pass ownership from 'ps'
             attribute: attr.clone(),
             name: a.name.clone(),
             pname: a.pname.clone(),
@@ -172,70 +148,35 @@ struct RepologyPackage {
     latest: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
-/// Dervivation description with subset of fields needed to detect stale packages.
-struct RepologyEntry {
-    repo: String,
-
-    // TODO: what about 'srcname' and 'visiblename'?
-    name: Option<String>,
-
-    // TODO: also has 'origversion'
-    version: String,
-
-    // "outdated" / "newest"
-    status: String,
-}
-
 /// Returns list of all stale derivations according to repology.
-/// TODO: fetch data from repology site
 fn get_repology_packages() -> BTreeSet<RepologyPackage> {
-    // Parse repology json entries in form of:
-    //     {
-    //       "python:networkx": [
-    //         {
-    //         {
-    //           "repo": "nix_unstable",
-    //           "name": "python3.10-networkx",
-    //           "visiblename": "python3.10-networkx",
-    //           "version": "2.8.6",
-    //           "maintainers": [
-    //             "fallback-mnt-nix@repology"
-    //           ],
-    //           "licenses": [
-    //             "BSD-3-Clause"
-    //           ],
-    //           "summary": "Library for the creation, manipulation, and study of the structure, dynamics, and functions of complex networks",
-    //           "categories": [
-    //             "python310Packages"
-    //           ],
-    //           "status": "outdated",
-    //           "origversion": null
-    //         },
-
-
     let mut r = BTreeSet::new();
 
     // We pull in all package ingo py paginating through
-    //     https://repology.org/api/v1/projects/?inrepo=nix_unstable
-    //     https://repology.org/api/v1/projects/${suffix}?inrepo=nix_unstable
-    // We stop iteration when we can't advance suffix.
-    //
-    // Note: we fetch not just outdated, but all the package versions
-    // known to repology. For some use cases we could fetch only
-    // outdated:
-    //     https://repology.org/api/v1/projects/?inrepo=nix_unstable&outdated=1"
-    //     https://repology.org/api/v1/projects/${suffix}?inrepo=nix_unstable&outdated=1"
+    //     https://repology.org/api/v1/projects/?inrepo=nix_unstable&outdated=1
+    //     https://repology.org/api/v1/projects/${suffix}?inrepo=nix_unstable&outdated=1
     let mut suffix: String = "".to_string();
 
     loop {
-        //let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable");
         let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
         println!("Fetching from repology: {:?}", suffix);
         let contents_u8 = run_cmd(&["curl", "--compressed", "-s", &url]);
+        // {
+        //   "python:networkx": [
+        //     {
+        //       "repo": "nix_unstable",
+        //       "name": "python3.10-networkx",
+        //       "version": "2.8.6",
+        //       "status": "outdated",
+        //     },
 
-        let pkgs: BTreeMap<String, Vec<RepologyEntry>> = serde_json::from_slice(contents_u8.as_slice()).expect("valid json");
+        #[derive(Deserialize, Debug)]
+        /// Dervivation description with subset of fields needed to detect stale packages.
+        struct Repology { repo: String, name: Option<String>, version: String, status: String }
+
+        let pkgs: BTreeMap<String, Vec<Repology>> =
+            serde_json::from_slice(contents_u8.as_slice()).expect("valid json");
 
         let mut next_suffix = suffix.clone();
         for (n, vs) in &pkgs {
