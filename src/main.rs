@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use std::process::Command;
 use std::cmp::min;
 
+use clap::Parser;
 use serde_derive::Deserialize;
 
 fn u8_to_s(a: &[u8], nbytes: usize) -> String {
@@ -18,9 +19,9 @@ fn run_cmd(args: &[&str]) -> Vec<u8> {
                       .expect("Failed to run command");
     // TODO: error handling
     if !cmd.status.success() {
-      println!("Command {:?} failed with status: {:?}", args, cmd.status);
-      println!("stdout: {:?}", u8_to_s(&cmd.stdout, 40));
-      println!("stderr: {:?}", u8_to_s(&cmd.stderr, 40));
+        println!("Command {:?} failed with status: {:?}", args, cmd.status);
+        println!("stdout: {:?}", u8_to_s(&cmd.stdout, 40));
+        println!("stderr: {:?}", u8_to_s(&cmd.stderr, 40));
     }
 
     assert!(cmd.status.success());
@@ -40,12 +41,22 @@ struct LocalInstalledPackage {
 
 /// Returns list of all used derivations in parsed form.
 // TODO: add parameters like a directory defining nixpkgs path, a system expression.
-fn get_local_installed_packages() -> BTreeSet<LocalInstalledPackage> {
+fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInstalledPackage> {
     // TODO: is there a 'nix' command equivalent?
-    let out_u8 = run_cmd(&["nix-instantiate",
-                           "<nixpkgs/nixos>",
-                           "-A", "system"
-                           ]);
+    let mut cmd: Vec<&str> = vec![
+        "nix-instantiate",
+        "<nixpkgs/nixos>",
+        "-A", "system"
+    ];
+    let a: String;
+    match nixpkgs {
+        None => {},
+        Some(p) => {
+            a = format!("nixpkgs={p}");
+            cmd.extend_from_slice(&["-I", &a]);
+        }
+    }
+    let out_u8 = run_cmd(&cmd);
     // Returns path to derivation file (and a newline)
     let out_s = String::from_utf8(out_u8).expect("utf8");
     // Have to drop trailing newline.
@@ -98,15 +109,25 @@ struct LocalAvailablePackage {
 
 /// Returns list of all available packages in parsed form.
 // TODO: add parameters like a directory defining nixpkgs path, a system expression.
-fn get_local_available_packages() -> BTreeSet<LocalAvailablePackage> {
+fn get_local_available_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalAvailablePackage> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
-    let ps_u8 = run_cmd(&["nix-env",
-                           "-qa",
-                           "--json",
-                           "--arg", "config", "import <nixpkgs/pkgs/top-level/packages-config.nix>",
-                           "--option", "build-users-group", "\"\"",
-                           ]);
+    let mut cmd: Vec<&str> = vec![
+        "nix-env",
+        "-qa",
+        "--json",
+        "--arg", "config", "import <nixpkgs/pkgs/top-level/packages-config.nix>",
+        "--option", "build-users-group", "\"\"",
+    ];
+    let a: String;
+    match nixpkgs {
+        None => {},
+        Some(p) => {
+            a = format!("nixpkgs={p}");
+            cmd.extend_from_slice(&["-I", &a]);
+        }
+    }
+    let ps_u8 = run_cmd(&cmd);
     // "nixos.python310Packages.networkx": {
     //   "name": "python3.10-networkx-2.8.6",
     //   "pname": "python3.10-networkx",
@@ -209,8 +230,19 @@ fn get_repology_packages() -> BTreeSet<RepologyPackage> {
     r
 }
 
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// alternative path to <nixpkgs> location
+    #[arg(short, long)]
+    nixpkgs: Option<String>,
+}
+
 fn main() {
     // TODO: add basic help and commandline
+
+    let o = Args::parse();
 
     let (repology_ps, installed_ps, available_ps) = (|| {
        let mut r = BTreeSet::<RepologyPackage>::new();
@@ -221,9 +253,18 @@ fn main() {
        // - Repology thread is network-bound
        // - Installed and available threads are CPU-bound
        std::thread::scope(|s| {
-         s.spawn(|| { r = get_repology_packages(); println!("packages: repology done"); });
-         s.spawn(|| { i = get_local_installed_packages(); println!("packages: installed done!"); });
-         s.spawn(|| { a = get_local_available_packages(); println!("packages: available done!"); });
+         s.spawn(|| {
+             r = get_repology_packages();
+             println!("packages: repology done");
+         });
+         s.spawn(|| {
+             i = get_local_installed_packages(&o.nixpkgs);
+             println!("packages: installed done!");
+         });
+         s.spawn(|| {
+             a = get_local_available_packages(&o.nixpkgs);
+             println!("packages: available done!");
+         });
        });
 
        (r, i, a)
