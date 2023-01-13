@@ -29,7 +29,6 @@ fn run_cmd(args: &[&str]) -> Vec<u8> {
     cmd.stdout
 }
 
-
 /// Installed packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 struct LocalInstalledPackage {
@@ -234,9 +233,14 @@ fn get_repology_packages() -> BTreeSet<RepologyPackage> {
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// alternative path to <nixpkgs> location
+    /// Alternative path to <nixpkgs> location.
     #[arg(short, long)]
     nixpkgs: Option<String>,
+
+    /// Enable extra verbosity to report unexpected events,
+    /// fetch progress and so on.
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() {
@@ -332,11 +336,13 @@ fn main() {
 
     missing_available.sort();
     missing_repology.sort();
-    println!();
-    println!("Installed packages missing in available list: {:?}", missing_available);
+    if o.verbose {
+        println!();
+        println!("Installed packages missing in available list: {:?}", missing_available);
 
-    // TODO:
-    // Should be relevant only when we fetch all repology data, not just '&outdated=1'
-    //println!();
-    //println!("Installed packages missing in repology output: {:?}", missing_repology);
+        // TODO:
+        // Should be relevant only when we fetch all repology data, not just '&outdated=1'
+        //println!();
+        //println!("Installed packages missing in repology output: {:?}", missing_repology);
+    }
 }
