@@ -19,9 +19,9 @@ fn run_cmd(args: &[&str]) -> Vec<u8> {
                       .expect("Failed to run command");
     // TODO: error handling
     if !cmd.status.success() {
-        println!("Command {:?} failed with status: {:?}", args, cmd.status);
-        println!("stdout: {:?}", u8_to_s(&cmd.stdout, 40));
-        println!("stderr: {:?}", u8_to_s(&cmd.stderr, 40));
+        eprintln!("Command {:?} failed with status: {:?}", args, cmd.status);
+        eprintln!("stdout: {:?}", u8_to_s(&cmd.stdout, 40));
+        eprintln!("stderr: {:?}", u8_to_s(&cmd.stderr, 40));
     }
 
     assert!(cmd.status.success());
@@ -180,7 +180,7 @@ fn get_repology_packages() -> BTreeSet<RepologyPackage> {
     loop {
         let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
-        println!("Fetching from repology: {:?}", suffix);
+        eprintln!("Fetching from repology: {:?}", suffix);
         let contents_u8 = run_cmd(&["curl", "--compressed", "-s", &url]);
         // {
         //   "python:networkx": [
@@ -259,15 +259,15 @@ fn main() {
        std::thread::scope(|s| {
          s.spawn(|| {
              r = get_repology_packages();
-             println!("packages: repology done");
+             eprintln!("packages: repology done");
          });
          s.spawn(|| {
              i = get_local_installed_packages(&o.nixpkgs);
-             println!("packages: installed done!");
+             eprintln!("packages: installed done!");
          });
          s.spawn(|| {
              a = get_local_available_packages(&o.nixpkgs);
-             println!("packages: available done!");
+             eprintln!("packages: available done!");
          });
        });
 
@@ -337,12 +337,12 @@ fn main() {
     missing_available.sort();
     missing_repology.sort();
     if o.verbose {
-        println!();
-        println!("Installed packages missing in available list: {:?}", missing_available);
+        eprintln!();
+        eprintln!("Installed packages missing in available list: {:?}", missing_available);
 
         // TODO:
         // Should be relevant only when we fetch all repology data, not just '&outdated=1'
-        //println!();
-        //println!("Installed packages missing in repology output: {:?}", missing_repology);
+        //eprintln!();
+        //eprintln!("Installed packages missing in repology output: {:?}", missing_repology);
     }
 }
