@@ -19,9 +19,9 @@ fn run_cmd(args: &[&str]) -> Vec<u8> {
                       .expect("Failed to run command");
     // TODO: error handling
     if !cmd.status.success() {
-        eprintln!("Command {:?} failed with status: {:?}", args, cmd.status);
-        eprintln!("stdout: {:?}", u8_to_s(&cmd.stdout, 40));
-        eprintln!("stderr: {:?}", u8_to_s(&cmd.stderr, 40));
+        eprintln!("ERROR: command {:?} failed with status: {:?}", args, cmd.status);
+        eprintln!("  stdout: {:?}", u8_to_s(&cmd.stdout, 40));
+        eprintln!("  stderr: {:?}", u8_to_s(&cmd.stderr, 40));
     }
 
     assert!(cmd.status.success());
@@ -169,7 +169,7 @@ struct RepologyPackage {
 }
 
 /// Returns list of all stale derivations according to repology.
-fn get_repology_packages() -> BTreeSet<RepologyPackage> {
+fn get_repology_packages(verbose: bool) -> BTreeSet<RepologyPackage> {
     let mut r = BTreeSet::new();
 
     // We pull in all package ingo py paginating through
@@ -180,7 +180,9 @@ fn get_repology_packages() -> BTreeSet<RepologyPackage> {
     loop {
         let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
-        eprintln!("Fetching from repology: {:?}", suffix);
+        if verbose {
+            eprintln!("Fetching from repology: {:?}", suffix);
+        }
         let contents_u8 = run_cmd(&["curl", "--compressed", "-s", &url]);
         // {
         //   "python:networkx": [
@@ -229,7 +231,8 @@ fn get_repology_packages() -> BTreeSet<RepologyPackage> {
     r
 }
 
-/// Simple program to greet a person
+/// A tool to show outdated packages in current system according to
+/// repology.org database.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -258,16 +261,19 @@ fn main() {
        // - Installed and available threads are CPU-bound
        std::thread::scope(|s| {
          s.spawn(|| {
-             r = get_repology_packages();
+             eprintln!("packages: fetching repology");
+             r = get_repology_packages(o.verbose);
              eprintln!("packages: repology done");
          });
          s.spawn(|| {
+             eprintln!("packages: fetching installed");
              i = get_local_installed_packages(&o.nixpkgs);
-             eprintln!("packages: installed done!");
+             eprintln!("packages: installed done");
          });
          s.spawn(|| {
+             eprintln!("packages: fetching available");
              a = get_local_available_packages(&o.nixpkgs);
-             eprintln!("packages: available done!");
+             eprintln!("packages: available done");
          });
        });
 
