@@ -261,19 +261,19 @@ fn main() {
        // - Installed and available threads are CPU-bound
        std::thread::scope(|s| {
          s.spawn(|| {
-             eprintln!("packages: fetching repology");
+             eprintln!("Fetching 'repology' ...");
              r = get_repology_packages(o.verbose);
-             eprintln!("packages: repology done");
+             eprintln!("... 'repology' done.");
          });
          s.spawn(|| {
-             eprintln!("packages: fetching installed");
+             eprintln!("Fetching 'installed' ...");
              i = get_local_installed_packages(&o.nixpkgs);
-             eprintln!("packages: installed done");
+             eprintln!("... 'installed' done.");
          });
          s.spawn(|| {
-             eprintln!("packages: fetching available");
+             eprintln!("Fetching 'available' ...");
              a = get_local_available_packages(&o.nixpkgs);
-             eprintln!("packages: available done");
+             eprintln!("... 'available' done.");
          });
        });
 
@@ -337,7 +337,8 @@ fn main() {
           // Do not print outdated versions if there is use of most recet package
           if vs.contains(&lv as &str) { continue }
         }
-        println!("{} is outdated: repology_latest={:?} nixpkgs_available={:?} (nixpkgs_attributes={:?})", rn, (*olv).clone().unwrap_or("<none>".to_string()), vs, ats);
+        println!("repology: {} latest={:?} | nixpkgs: available={:?} (attrs={:?})",
+            rn, (*olv).clone().unwrap_or("<none>".to_string()), vs, ats);
     }
 
     missing_available.sort();
