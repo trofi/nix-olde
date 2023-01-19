@@ -75,7 +75,7 @@ fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInsta
     #[derive(Deserialize)]
     struct DrvEnv { name: Option<String>, version: Option<String> }
     #[derive(Deserialize)]
-    /// Dervivation description with subset of fields needed to detect stale packages.
+    /// Dervivation description with subset of fields needed to detect outdated packages.
     struct Installed { env: DrvEnv, }
 
     let drvs: BTreeMap<String, Installed> =
@@ -168,7 +168,7 @@ struct RepologyPackage {
     latest: Option<String>,
 }
 
-/// Returns list of all stale derivations according to repology.
+/// Returns list of all outdated derivations according to repology.
 fn get_repology_packages(verbose: bool) -> BTreeSet<RepologyPackage> {
     let mut r = BTreeSet::new();
 
@@ -194,7 +194,7 @@ fn get_repology_packages(verbose: bool) -> BTreeSet<RepologyPackage> {
         //     },
 
         #[derive(Deserialize, Debug)]
-        /// Dervivation description with subset of fields needed to detect stale packages.
+        /// Dervivation description with subset of fields needed to detect outdated packages.
         struct Repology { repo: String, name: Option<String>, version: String, status: String }
 
         let pkgs: BTreeMap<String, Vec<Repology>> =
@@ -337,7 +337,7 @@ fn main() {
           // Do not print outdated versions if there is use of most recet package
           if vs.contains(&lv as &str) { continue }
         }
-        println!("repology: {} latest={:?} | nixpkgs: available={:?} (attrs={:?})",
+        println!("repology {} {:?} | nixpkgs {:?} {:?}",
             rn, (*olv).clone().unwrap_or("<none>".to_string()), vs, ats);
     }
 

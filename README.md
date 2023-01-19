@@ -1,4 +1,4 @@
-`nix-stales` is a tool to show details about outdated packages in your
+`nix-olde` is a tool to show details about outdated packages in your
 `NixOS` system using <https://repology.org/> database.
 
 # Usage example
@@ -6,7 +6,7 @@
 The simplest way to use it is to just run it:
 
 ```
-$ cargo build --release && target/release/nix-stales
+$ cargo build --release && target/release/nix-olde
 
 Fetching from repology: ""
 Fetching from repology: "bitlbee-discord/"
@@ -38,7 +38,7 @@ There are a few:
 ```
 $ ./mkrun.bash --help
 
-Usage: nix-stales [OPTIONS]
+Usage: nix-olde [OPTIONS]
 
 Options:
   -n, --nixpkgs <NIXPKGS>  Alternative path to <nixpkgs> location
