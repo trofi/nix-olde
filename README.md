@@ -9,22 +9,33 @@ system currently uses.
 
 # Running it
 
+There is no `Cargo.lock` package or uploaded crate just yet. I'm not
+sure if such a small tool warrants it. Thus you need to clone and build
+it using `cargo` build tool:
+
+```
+$ git clone https://github.com/trofi/nix-olde.git
+$ carg build
+```
+
+Now you should be ready to run it.
+
 Diff against current system:
 
 ```
-$ cargo build && target/debug/nix-olde
+$ ./target/debug/nix-olde
 ```
 
 Diff against latest `staging`:
 
 ```
-$ cargo build && target/debug/nix-olde -n https://github.com/NixOS/nixpkgs/archive/refs/heads/staging.targ.gz
+$ ./target/debug/nix-olde -n https://github.com/NixOS/nixpkgs/archive/refs/heads/staging.targ.gz
 ```
 
 Or against local checkout:
 
 ```
-$ cargo build && target/debug/nix-olde -n ./nixpkgs
+$ ./target/debug/nix-olde -n ./nixpkgs
 ```
 
 # Typical output
@@ -105,3 +116,7 @@ Currently used data sources are:
   * `status`: package status in repository (examples: "newest",
     "outdared").
 
+# License
+
+`nix-olde` is distributed under
+[MIT license](https://opensource.org/licenses/MIT).
