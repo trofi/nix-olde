@@ -15,7 +15,7 @@ it using `cargo` build tool:
 
 ```
 $ git clone https://github.com/trofi/nix-olde.git
-$ carg build
+$ cargo build
 ```
 
 Now you should be ready to run it.
@@ -29,7 +29,7 @@ $ ./target/debug/nix-olde
 Diff against latest `staging`:
 
 ```
-$ ./target/debug/nix-olde -n https://github.com/NixOS/nixpkgs/archive/refs/heads/staging.targ.gz
+$ ./target/debug/nix-olde -n https://github.com/NixOS/nixpkgs/archive/refs/heads/staging.tar.gz
 ```
 
 Or against local checkout:
