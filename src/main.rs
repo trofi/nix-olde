@@ -172,8 +172,9 @@ fn get_local_available_packages(nixpkgs: &Option<String>)
     match nixpkgs {
         None => {},
         Some(p) => {
-            a = format!("{p}");
-            cmd.extend_from_slice(&["-f", &a]);
+            a = format!("nixpkgs={p}");
+            cmd.extend_from_slice(&["-I", &a]);
+            cmd.extend_from_slice(&["-f", &p]);
         }
     }
     let ps_u8 = run_cmd(&cmd)?;
