@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::process::Command;
-use std::cmp::min;
 
 use clap::Parser;
 use serde_derive::Deserialize;
@@ -9,32 +8,29 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 enum OldeError {
-    #[error("command failed")]
-    CommandFailed(std::process::Output),
+    #[error("command {cmd:?} failed: {output:?}")]
+    CommandFailed {
+        cmd: Vec<String>,
+        output: std::process::Output,
+    },
+    #[error("multiple errors: {0:?}")]
+    MultipleErrors(Vec<OldeError>),
 }
 
-fn u8_to_s(a: &[u8], nbytes: usize) -> String {
-  let prefix = &a[..min(nbytes, a.len())];
-  // TODO: turn decoding failure ot proper error with context as well.
-  String::from_utf8(prefix.to_vec()).expect("valid utf8")
-}
-
-/// Runs 'cmd' and returns stdout.
-/// TODO: add error handling.
+/// Runs 'cmd' and returns stdout or failure.
 fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
-    let cmd = Command::new(args[0]).args(&args[1..])
+    let output = Command::new(args[0]).args(&args[1..])
                       .output()
                       .expect("Failed to run command");
-    // TODO: error handling
-    if !cmd.status.success() {
-        // TODO: move it out to error printer
-        eprintln!("ERROR: command {:?} failed with status: {:?}", args, cmd.status);
-        eprintln!("  stdout: {:?}", u8_to_s(&cmd.stdout, 40));
-        eprintln!("  stderr: {:?}", u8_to_s(&cmd.stderr, 40));
-        return Err(OldeError::CommandFailed(cmd));
+
+    if !output.status.success() {
+       return Err(OldeError::CommandFailed {
+            cmd: args.into_iter().map(|a| a.to_string()).collect(),
+            output,
+        });
     }
 
-    Ok(cmd.stdout)
+    Ok(output.stdout)
 }
 
 /// Installed packages with available 'pname' and 'version' attributes.
@@ -48,12 +44,11 @@ struct LocalInstalledPackage {
 
 fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>)
     -> Result<String, OldeError> {
-    // TODO: is there a 'nix' command equivalent?
-
     let flake_sys_attr = format!(
         "/etc/nixos#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
         gethostname::gethostname().into_string().expect("valid hostname"));
 
+    // TODO: pass enough options to enable experimental commands
     let mut cmd: Vec<&str> = vec![
         "nix", "eval",
         // pessimistic case of impure flake
@@ -73,7 +68,7 @@ fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>)
 
 fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>)
     -> Result<String, OldeError> {
-    // TODO: is there a 'nix' command equivalent?
+    // TODO: is there a 'nix' command equivalent? Maybe 'nix eval'?
     let mut cmd: Vec<&str> = vec![
         "nix-instantiate",
         "<nixpkgs/nixos>",
@@ -99,10 +94,18 @@ fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>)
 fn get_local_system_derivation(nixpkgs: &Option<String>)
     -> Result<String, OldeError> {
 
+    let mut errs = Vec::new();
+
     // Is there a helper for that?
     let fr = get_local_system_derivation_via_flakes(nixpkgs);
     if fr.is_ok() { return fr; }
-    get_local_system_derivation_via_nixos(nixpkgs)
+    errs.push(fr.err().unwrap());
+
+    let er = get_local_system_derivation_via_nixos(nixpkgs);
+    if er.is_ok() { return er; }
+    errs.push(er.err().unwrap());
+
+    Err(OldeError::MultipleErrors(errs))
 }
 
 /// Returns list of all used derivations in parsed form.
@@ -332,6 +335,16 @@ fn main() -> Result<(), OldeError> {
 
        (r, i, a)
     }) ();
+
+    // Report all encountered errors
+    if r.is_err() || i.is_err() || a.is_err() {
+        let mut errs = Vec::new();
+        if r.is_err() { errs.push(r.err().unwrap()) }
+        if i.is_err() { errs.push(i.err().unwrap()) }
+        if a.is_err() { errs.push(a.err().unwrap()) }
+
+        return Err(OldeError::MultipleErrors(errs));
+    }
     let (repology_ps, installed_ps, available_ps) = (r?, i?, a?);
 
     // 1. go through all local `.drv' files
