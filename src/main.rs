@@ -61,9 +61,11 @@ fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>)
         "/etc/nixos#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
         gethostname::gethostname().into_string().expect("valid hostname"));
 
-    // TODO: pass enough options to enable experimental commands
     let mut cmd: Vec<&str> = vec![
-        "nix", "eval",
+        "nix",
+        "--extra-experimental-features", "nix-command",
+        "--extra-experimental-features", "flakes",
+        "eval",
         // pessimistic case of impure flake
         // TODO: allow passing these flags explicitly when needed
         "--impure",
@@ -126,9 +128,10 @@ fn get_local_system_derivation(nixpkgs: &Option<String>)
 fn get_local_installed_packages(nixpkgs: &Option<String>)
     -> Result<BTreeSet<LocalInstalledPackage>, OldeError> {
     let drv_path = get_local_system_derivation(nixpkgs)?;
-    // TODO: pass in experimental command flags to make it work on
-    // default `nix` installs as well. 
-    let drvs_u8 = run_cmd(&["nix", "show-derivation", "-r", &drv_path])?;
+    let drvs_u8 = run_cmd(&[
+        "nix",
+        "--extra-experimental-features", "nix-command",
+        "show-derivation", "-r", &drv_path])?;
     // {
     //   "/nix/store/...-python3.10-networkx-2.8.6.drv": {
     //     "env": {
@@ -198,9 +201,11 @@ fn get_local_available_packages(nixpkgs: &Option<String>)
             // input and explicitly pass it in. If it fails we just
             // leave things as is.
 
-            // TODO: pass enough options to enable experimental commands
             let r = run_cmd(&[
-                "nix", "flake", "archive", "/etc/nixos", "--json"]);
+                "nix",
+                "--extra-experimental-features", "nix-command",
+                "--extra-experimental-features", "flakes",
+                "flake", "archive", "/etc/nixos", "--json"]);
             // Assume simplest form:
             // { "inputs": { "nixpkgs": {
             //                 "inputs": {},
