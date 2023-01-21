@@ -5,28 +5,36 @@ use std::cmp::min;
 
 use clap::Parser;
 use serde_derive::Deserialize;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+enum OldeError {
+    #[error("command failed")]
+    CommandFailed(std::process::Output),
+}
 
 fn u8_to_s(a: &[u8], nbytes: usize) -> String {
   let prefix = &a[..min(nbytes, a.len())];
+  // TODO: turn decoding failure ot proper error with context as well.
   String::from_utf8(prefix.to_vec()).expect("valid utf8")
 }
 
 /// Runs 'cmd' and returns stdout.
 /// TODO: add error handling.
-fn run_cmd(args: &[&str]) -> Vec<u8> {
+fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
     let cmd = Command::new(args[0]).args(&args[1..])
                       .output()
                       .expect("Failed to run command");
     // TODO: error handling
     if !cmd.status.success() {
+        // TODO: move it out to error printer
         eprintln!("ERROR: command {:?} failed with status: {:?}", args, cmd.status);
         eprintln!("  stdout: {:?}", u8_to_s(&cmd.stdout, 40));
         eprintln!("  stderr: {:?}", u8_to_s(&cmd.stderr, 40));
+        return Err(OldeError::CommandFailed(cmd));
     }
 
-    assert!(cmd.status.success());
-
-    cmd.stdout
+    Ok(cmd.stdout)
 }
 
 /// Installed packages with available 'pname' and 'version' attributes.
@@ -40,7 +48,8 @@ struct LocalInstalledPackage {
 
 /// Returns store path for local system derivation to later extract
 /// all packages used to build it.
-fn get_local_system_derivation(nixpkgs: &Option<String>) -> String {
+fn get_local_system_derivation(nixpkgs: &Option<String>)
+    -> Result<String, OldeError> {
     // TODO: is there a 'nix' command equivalent?
     let mut cmd: Vec<&str> = vec![
         "nix-instantiate",
@@ -55,20 +64,21 @@ fn get_local_system_derivation(nixpkgs: &Option<String>) -> String {
             cmd.extend_from_slice(&["-I", &a]);
         }
     }
-    let out_u8 = run_cmd(&cmd);
+    let out_u8 = run_cmd(&cmd)?;
     // Returns path to derivation file (and a newline)
     let out_s = String::from_utf8(out_u8).expect("utf8");
     // Have to drop trailing newline.
-    out_s.trim().to_string()
+    Ok(out_s.trim().to_string())
 }
 
 /// Returns list of all used derivations in parsed form.
 // TODO: add parameters like a directory defining nixpkgs path, a system expression.
-fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInstalledPackage> {
-    let drv_path = get_local_system_derivation(nixpkgs);
+fn get_local_installed_packages(nixpkgs: &Option<String>)
+    -> Result<BTreeSet<LocalInstalledPackage>, OldeError> {
+    let drv_path = get_local_system_derivation(nixpkgs)?;
     // TODO: pass in experimental command flags to make it work on
     // default `nix` installs as well. 
-    let drvs_u8 = run_cmd(&["nix", "show-derivation", "-r", &drv_path]);
+    let drvs_u8 = run_cmd(&["nix", "show-derivation", "-r", &drv_path])?;
     // {
     //   "/nix/store/...-python3.10-networkx-2.8.6.drv": {
     //     "env": {
@@ -86,7 +96,7 @@ fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInsta
     let drvs: BTreeMap<String, Installed> =
         serde_json::from_slice(drvs_u8.as_slice()).expect("valid json");
 
-    drvs.iter().filter_map(|(_drv, oenv)|
+    Ok(drvs.iter().filter_map(|(_drv, oenv)|
         match &oenv.env {
             DrvEnv{name: Some(n), version: Some(ver)} => Some(
                 LocalInstalledPackage{
@@ -98,7 +108,7 @@ fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInsta
             // commands.
             _  => None,
         }
-    ).collect()
+    ).collect())
 }
 
 
@@ -113,7 +123,8 @@ struct LocalAvailablePackage {
 
 /// Returns list of all available packages in parsed form.
 // TODO: add parameters like a directory defining nixpkgs path, a system expression.
-fn get_local_available_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalAvailablePackage> {
+fn get_local_available_packages(nixpkgs: &Option<String>)
+    -> Result<BTreeSet<LocalAvailablePackage>, OldeError> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
     let mut cmd: Vec<&str> = vec![
@@ -131,7 +142,7 @@ fn get_local_available_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalAvail
             cmd.extend_from_slice(&["-f", &a]);
         }
     }
-    let ps_u8 = run_cmd(&cmd);
+    let ps_u8 = run_cmd(&cmd)?;
     // "nixos.python310Packages.networkx": {
     //   "name": "python3.10-networkx-2.8.6",
     //   "pname": "python3.10-networkx",
@@ -144,14 +155,14 @@ fn get_local_available_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalAvail
     let ps: BTreeMap<String, Available> =
         serde_json::from_slice(ps_u8.as_slice()).expect("valid json");
 
-    ps.iter().filter_map(|(attr, a)|
+    Ok(ps.iter().filter_map(|(attr, a)|
         Some(LocalAvailablePackage{
             attribute: attr.clone(),
             name: a.name.clone(),
             pname: a.pname.clone(),
             version: a.version.clone(),
         })
-    ).collect()
+    ).collect())
 }
 
 /// Installed packages with available 'pname' and 'version' attributes.
@@ -174,7 +185,8 @@ struct RepologyPackage {
 }
 
 /// Returns list of all outdated derivations according to repology.
-fn get_repology_packages(verbose: bool) -> BTreeSet<RepologyPackage> {
+fn get_repology_packages(verbose: bool)
+    -> Result<BTreeSet<RepologyPackage>, OldeError> {
     let mut r = BTreeSet::new();
 
     // We pull in all package ingo py paginating through
@@ -188,7 +200,7 @@ fn get_repology_packages(verbose: bool) -> BTreeSet<RepologyPackage> {
         if verbose {
             eprintln!("Fetching from repology: {:?}", suffix);
         }
-        let contents_u8 = run_cmd(&["curl", "--compressed", "-s", &url]);
+        let contents_u8 = run_cmd(&["curl", "--compressed", "-s", &url])?;
         // {
         //   "python:networkx": [
         //     {
@@ -233,7 +245,7 @@ fn get_repology_packages(verbose: bool) -> BTreeSet<RepologyPackage> {
         suffix = next_suffix;
     }
 
-    r
+    Ok(r)
 }
 
 /// A tool to show outdated packages in current system according to
@@ -251,15 +263,16 @@ struct Args {
     verbose: bool,
 }
 
-fn main() {
-    // TODO: add basic help and commandline
-
+fn main() -> Result<(), OldeError> {
     let o = Args::parse();
 
-    let (repology_ps, installed_ps, available_ps) = (|| {
-       let mut r = BTreeSet::<RepologyPackage>::new();
-       let mut i = BTreeSet::<LocalInstalledPackage>::new();
-       let mut a = BTreeSet::<LocalAvailablePackage>::new();
+    let (r, i, a) = (|| {
+       let mut r: Result<BTreeSet::<RepologyPackage>,       OldeError> =
+           Ok(BTreeSet::new());
+       let mut i: Result<BTreeSet::<LocalInstalledPackage>, OldeError> =
+           Ok(BTreeSet::new());
+       let mut a: Result<BTreeSet::<LocalAvailablePackage>, OldeError> =
+           Ok(BTreeSet::new());
 
        // Each of threads is somewhat slow to proceed:
        // - Repology thread is network-bound
@@ -284,6 +297,7 @@ fn main() {
 
        (r, i, a)
     }) ();
+    let (repology_ps, installed_ps, available_ps) = (r?, i?, a?);
 
     // 1. go through all local `.drv' files
     // 2. get 'name' from
@@ -357,4 +371,5 @@ fn main() {
         //eprintln!();
         //eprintln!("Installed packages missing in repology output: {:?}", missing_repology);
     }
+    Ok(())
 }

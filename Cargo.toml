@@ -9,3 +9,4 @@ clap = { version = "*", features = ["derive"] }
 serde = "*"
 serde_derive = "*"
 serde_json = "*"
+thiserror = "*"
