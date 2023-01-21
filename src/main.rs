@@ -83,7 +83,8 @@ fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>)
 
 fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>)
     -> Result<String, OldeError> {
-    // TODO: is there a 'nix' command equivalent? Maybe 'nix eval'?
+    // 'nix eval' could also do here, but it will force a copy. Which
+    // takes a few seconds even on SSD. Might be worth it longer term?
     let mut cmd: Vec<&str> = vec![
         "nix-instantiate",
         "<nixpkgs/nixos>",
@@ -124,7 +125,7 @@ fn get_local_system_derivation(nixpkgs: &Option<String>)
 }
 
 /// Returns list of all used derivations in parsed form.
-// TODO: add parameters like a directory defining nixpkgs path, a system expression.
+// TODO: add parameters like system expression.
 fn get_local_installed_packages(nixpkgs: &Option<String>)
     -> Result<BTreeSet<LocalInstalledPackage>, OldeError> {
     let drv_path = get_local_system_derivation(nixpkgs)?;
@@ -180,7 +181,6 @@ struct LocalAvailablePackage {
 }
 
 /// Returns list of all available packages in parsed form.
-// TODO: add parameters like a directory defining nixpkgs path, a system expression.
 fn get_local_available_packages(nixpkgs: &Option<String>)
     -> Result<BTreeSet<LocalAvailablePackage>, OldeError> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
@@ -517,6 +517,12 @@ fn main() -> Result<(), OldeError> {
         // Should be relevant only when we fetch all repology data, not just '&outdated=1'
         //eprintln!();
         //eprintln!("Installed packages missing in repology output: {:?}", missing_repology);
+    } else {
+        if !missing_available.is_empty() {
+            eprintln!();
+            eprintln!("Some installed packages are missing in available list: {}", missing_available.len());
+            eprintln!("  Add '--verbose' to get it's full list.");
+        }
     }
     Ok(())
 }
