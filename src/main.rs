@@ -38,9 +38,9 @@ struct LocalInstalledPackage {
     version: String,
 }
 
-/// Returns list of all used derivations in parsed form.
-// TODO: add parameters like a directory defining nixpkgs path, a system expression.
-fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInstalledPackage> {
+/// Returns store path for local system derivation to later extract
+/// all packages used to build it.
+fn get_local_system_derivation(nixpkgs: &Option<String>) -> String {
     // TODO: is there a 'nix' command equivalent?
     let mut cmd: Vec<&str> = vec![
         "nix-instantiate",
@@ -59,11 +59,16 @@ fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInsta
     // Returns path to derivation file (and a newline)
     let out_s = String::from_utf8(out_u8).expect("utf8");
     // Have to drop trailing newline.
-    let drv_path = out_s.trim();
+    out_s.trim().to_string()
+}
 
+/// Returns list of all used derivations in parsed form.
+// TODO: add parameters like a directory defining nixpkgs path, a system expression.
+fn get_local_installed_packages(nixpkgs: &Option<String>) -> BTreeSet<LocalInstalledPackage> {
+    let drv_path = get_local_system_derivation(nixpkgs);
     // TODO: pass in experimental command flags to make it work on
     // default `nix` installs as well. 
-    let drvs_u8 = run_cmd(&["nix", "show-derivation", "-r", drv_path]);
+    let drvs_u8 = run_cmd(&["nix", "show-derivation", "-r", &drv_path]);
     // {
     //   "/nix/store/...-python3.10-networkx-2.8.6.drv": {
     //     "env": {
