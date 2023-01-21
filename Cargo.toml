@@ -6,6 +6,7 @@ license = "MIT"
 
 [dependencies]
 clap = { version = "*", features = ["derive"] }
+gethostname = "*"
 serde = "*"
 serde_derive = "*"
 serde_json = "*"

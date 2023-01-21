@@ -46,9 +46,32 @@ struct LocalInstalledPackage {
     version: String,
 }
 
-/// Returns store path for local system derivation to later extract
-/// all packages used to build it.
-fn get_local_system_derivation(nixpkgs: &Option<String>)
+fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>)
+    -> Result<String, OldeError> {
+    // TODO: is there a 'nix' command equivalent?
+
+    let flake_sys_attr = format!(
+        "/etc/nixos#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
+        gethostname::gethostname().into_string().expect("valid hostname"));
+
+    let mut cmd: Vec<&str> = vec![
+        "nix", "eval",
+        // pessimistic case of impure flake
+        // TODO: allow passing these flags explicitly when needed
+        "--impure",
+        "--raw",
+        &flake_sys_attr];
+    match nixpkgs {
+        None => {},
+        Some(p) => {
+            cmd.extend_from_slice(&["--override-input", "nixpkgs", p]);
+        }
+    }
+    let out_u8 = run_cmd(&cmd)?;
+    Ok(String::from_utf8(out_u8).expect("utf8"))
+}
+
+fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>)
     -> Result<String, OldeError> {
     // TODO: is there a 'nix' command equivalent?
     let mut cmd: Vec<&str> = vec![
@@ -69,6 +92,17 @@ fn get_local_system_derivation(nixpkgs: &Option<String>)
     let out_s = String::from_utf8(out_u8).expect("utf8");
     // Have to drop trailing newline.
     Ok(out_s.trim().to_string())
+}
+
+/// Returns store path for local system derivation to later extract
+/// all packages used to build it.
+fn get_local_system_derivation(nixpkgs: &Option<String>)
+    -> Result<String, OldeError> {
+
+    // Is there a helper for that?
+    let fr = get_local_system_derivation_via_flakes(nixpkgs);
+    if fr.is_ok() { return fr; }
+    get_local_system_derivation_via_nixos(nixpkgs)
 }
 
 /// Returns list of all used derivations in parsed form.
