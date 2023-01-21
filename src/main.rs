@@ -498,6 +498,7 @@ fn main() -> Result<(), OldeError> {
         }
     }
 
+    let mut found_outdated: isize = 0;
     for (rn, (olv, vs, ats)) in &known_versions {
         if let Some(lv) = olv {
           // Do not print outdated versions if there is use of most recet package
@@ -505,6 +506,14 @@ fn main() -> Result<(), OldeError> {
         }
         println!("repology {} {:?} | nixpkgs {:?} {:?}",
             rn, (*olv).clone().unwrap_or("<none>".to_string()), vs, ats);
+        found_outdated += 1;
+    }
+
+    if found_outdated > 0 {
+        eprintln!();
+        let ratio: f64 = found_outdated as f64 * 100.0 / installed_ps.len() as f64;
+        eprintln!("{} of {} ({:.2}%) installed packages are outdated according to https://repology.org.",
+                  found_outdated, installed_ps.len(), ratio);
     }
 
     missing_available.sort();
@@ -512,11 +521,6 @@ fn main() -> Result<(), OldeError> {
     if o.verbose {
         eprintln!();
         eprintln!("Installed packages missing in available list: {:?}", missing_available);
-
-        // TODO:
-        // Should be relevant only when we fetch all repology data, not just '&outdated=1'
-        //eprintln!();
-        //eprintln!("Installed packages missing in repology output: {:?}", missing_repology);
     } else {
         if !missing_available.is_empty() {
             eprintln!();
