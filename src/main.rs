@@ -146,7 +146,7 @@ fn get_local_installed_packages(nixpkgs: &Option<String>)
 }
 
 
-/// Installed packages with available 'pname' and 'version' attributes.
+/// Locally available packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
 struct LocalAvailablePackage {
     attribute: String,
