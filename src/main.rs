@@ -189,12 +189,57 @@ fn get_local_available_packages(nixpkgs: &Option<String>)
         "--arg", "config", "import <nixpkgs/pkgs/top-level/packages-config.nix>",
         "--option", "build-users-group", "\"\"",
     ];
-    let a: String;
+    let mut a = String::new();
+    let na: String;
     match nixpkgs {
-        None => {},
+        None => {
+            // In Nixos without flakes `nix-env` should Just Work.
+            // But in system with flakes we need to extract `nixpkgs`
+            // input and explicitly pass it in. If it fails we just
+            // leave things as is.
+
+            // TODO: pass enough options to enable experimental commands
+            let r = run_cmd(&[
+                "nix", "flake", "archive", "/etc/nixos", "--json"]);
+            // Assume simplest form:
+            // { "inputs": { "nixpkgs": {
+            //                 "inputs": {},
+            //                 "path": "/nix/store/2z...-source"
+            //             }
+            match r {
+                Err(_) => {
+                    // Not a flake-based system? TODO: when verbose dump
+                    // here the error to ease debugging.
+                },
+                Ok(p_u8) => {
+
+                    #[derive(Deserialize)]
+                    struct Input { path: String }
+                    #[derive(Deserialize)]
+                    struct Archive { inputs: BTreeMap<String, Input> }
+
+                    let prefetched: Archive =
+                            serde_json::from_slice(p_u8.as_slice()).expect("valid json");
+
+                    // TODO: find might be shorter
+                    for (iname, i) in prefetched.inputs {
+                        if iname == "nixpkgs" {
+                            a = i.path
+                        }
+                    }
+
+                    if !a.is_empty() {
+                        // Assuming flake-based system.
+                        na = format!("nixpkgs={a}");
+                        cmd.extend_from_slice(&["-I", &na]);
+                        cmd.extend_from_slice(&["-f", &a]);
+                    }
+                },
+            }
+        },
         Some(p) => {
-            a = format!("nixpkgs={p}");
-            cmd.extend_from_slice(&["-I", &a]);
+            na = format!("nixpkgs={p}");
+            cmd.extend_from_slice(&["-I", &na]);
             cmd.extend_from_slice(&["-f", &p]);
         }
     }
