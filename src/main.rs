@@ -1,20 +1,33 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::process::Command;
+use std::sync::atomic::{AtomicBool,Ordering};
 
 use clap::Parser;
 use serde_derive::Deserialize;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 enum OldeError {
+    /// Running external command failed for some reason.
     #[error("command {cmd:?} failed: {output:?}")]
     CommandFailed {
         cmd: Vec<String>,
         output: std::process::Output,
     },
+
+    // Multiple errors happened. See individual entries for an
+    // explanation.
     #[error("multiple errors: {0:?}")]
     MultipleErrors(Vec<OldeError>),
+
+    // Cancelled externally.
+    #[error("canceled {0}")]
+    Canceled(String),
+
+    // Unexpected empty output.
+    #[error("unexpected empty output from {0}")]
+    EmptyOutput(String),
 }
 
 /// Runs 'cmd' and returns stdout or failure.
@@ -133,7 +146,7 @@ fn get_local_installed_packages(nixpkgs: &Option<String>)
     let drvs: BTreeMap<String, Installed> =
         serde_json::from_slice(drvs_u8.as_slice()).expect("valid json");
 
-    Ok(drvs.iter().filter_map(|(_drv, oenv)|
+    let r: BTreeSet<_> = drvs.iter().filter_map(|(_drv, oenv)|
         match &oenv.env {
             DrvEnv{name: Some(n), version: Some(ver)} => Some(
                 LocalInstalledPackage{
@@ -145,7 +158,12 @@ fn get_local_installed_packages(nixpkgs: &Option<String>)
             // commands.
             _  => None,
         }
-    ).collect())
+    ).collect();
+
+    // Misconfigured system, not a NixOS or flake-based system?
+    if r.is_empty() { return Err(OldeError::EmptyOutput(String::from("nix show-derivation"))); }
+
+    Ok(r)
 }
 
 
@@ -193,14 +211,20 @@ fn get_local_available_packages(nixpkgs: &Option<String>)
     let ps: BTreeMap<String, Available> =
         serde_json::from_slice(ps_u8.as_slice()).expect("valid json");
 
-    Ok(ps.iter().filter_map(|(attr, a)|
+    let r: BTreeSet<_> = ps.iter().filter_map(|(attr, a)|
         Some(LocalAvailablePackage{
             attribute: attr.clone(),
             name: a.name.clone(),
             pname: a.pname.clone(),
             version: a.version.clone(),
         })
-    ).collect())
+    ).collect();
+
+
+    // Misconfigured nixpkgs, not a NixOS or flake-based system?
+    if r.is_empty() { return Err(OldeError::EmptyOutput(String::from("nix-env query"))); }
+
+    Ok(r)
 }
 
 /// Installed packages with available 'pname' and 'version' attributes.
@@ -223,7 +247,7 @@ struct RepologyPackage {
 }
 
 /// Returns list of all outdated derivations according to repology.
-fn get_repology_packages(verbose: bool)
+fn get_repology_packages(verbose: bool, cancel_fetch: &AtomicBool)
     -> Result<BTreeSet<RepologyPackage>, OldeError> {
     let mut r = BTreeSet::new();
 
@@ -233,6 +257,9 @@ fn get_repology_packages(verbose: bool)
     let mut suffix: String = "".to_string();
 
     loop {
+        if cancel_fetch.load(Ordering::Relaxed) {
+            return Err(OldeError::Canceled(String::from("Repology fetch")));
+        }
         let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
         if verbose {
@@ -312,24 +339,43 @@ fn main() -> Result<(), OldeError> {
        let mut a: Result<BTreeSet::<LocalAvailablePackage>, OldeError> =
            Ok(BTreeSet::new());
 
+       // If an error occured in other 9faster) threads then this
+       // flag is raised to signal cancellation.
+       let cancel_fetch = AtomicBool::new(false);
+
        // Each of threads is somewhat slow to proceed:
        // - Repology thread is network-bound
        // - Installed and available threads are CPU-bound
        std::thread::scope(|s| {
          s.spawn(|| {
              eprintln!("Fetching 'repology' ...");
-             r = get_repology_packages(o.verbose);
-             eprintln!("... 'repology' done.");
+             r = get_repology_packages(o.verbose, &cancel_fetch);
+             if r.is_err() {
+                 cancel_fetch.store(true, Ordering::Relaxed);
+                 eprintln!("... 'repology' failed.");
+             } else {
+                 eprintln!("... 'repology' done.");
+             }
          });
          s.spawn(|| {
              eprintln!("Fetching 'installed' ...");
              i = get_local_installed_packages(&o.nixpkgs);
-             eprintln!("... 'installed' done.");
+             if i.is_err() {
+                 cancel_fetch.store(true, Ordering::Relaxed);
+                 eprintln!("... 'installed' failed.");
+             } else {
+                 eprintln!("... 'installed' done.");
+             }
          });
          s.spawn(|| {
              eprintln!("Fetching 'available' ...");
              a = get_local_available_packages(&o.nixpkgs);
-             eprintln!("... 'available' done.");
+             if a.is_err() {
+                 cancel_fetch.store(true, Ordering::Relaxed);
+                 eprintln!("... 'available' failed.");
+             } else {
+                 eprintln!("... 'available' done.");
+             }
          });
        });
 
