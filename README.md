@@ -7,6 +7,16 @@ It can use both default `<nixpkgs>` or custom URL or path specified via
 I usually use the tool to see what I could update in `nixpkgs` that my
 system currently uses.
 
+# Dependencies
+
+At runtime `nix-olde` uses 2 external packages and expects them in `PATH`:
+
+- `curl` to fetch `repology.org` reports
+- `nix` to query locally installed and available packages
+
+To build `nix-olde` you will need `rustc` and `cargo`. `Cargo.tml`
+contains more detailed description of dependencies.
+
 # Running it
 
 There is no `Cargo.lock` package or uploaded crate just yet. I'm not
@@ -15,6 +25,7 @@ it using `cargo` build tool:
 
 ```
 $ git clone https://github.com/trofi/nix-olde.git
+$ cd nix-olde
 $ cargo build
 ```
 
@@ -36,6 +47,13 @@ Or against local checkout:
 
 ```
 $ ./target/debug/nix-olde -n ./nixpkgs
+```
+
+I usually use small shell wrapper to build-and-run against local
+`staging` checkout:
+
+```
+$ ./mkrun.bash -n $(realpath ~/n)
 ```
 
 # Typical output
@@ -63,11 +81,16 @@ repology xsetroot "1.1.3" | nixpkgs {"1.1.2"} {"nixos.xorg.xsetroot"}
 repology xterm "378" | nixpkgs {"377"} {"nixos.xterm"}
 repology xz "5.4.1" | nixpkgs {"5.4.0"} {"nixos.xz"}
 repology zxing-cpp-nu-book "2.0.0" | nixpkgs {"1.4.0"} {"nixos.zxing-cpp"}
+
+388 of 1518 (25.56%) installed packages are outdated according to https://repology.org.
+
+Some installed packages are missing in available list: 68
+  Add '--verbose' to get it's full list.
 ```
 
 # Other options
 
-There are a few:
+There are a few options:
 
 ```
 $ ./mkrun.bash --help
@@ -96,12 +119,12 @@ systems, possible status).
 
 Currently used data sources are:
 
-- installed packages: uses `nix-instantiate` / `nix
-  show-derivation`. Provides fields:
+- installed packages: uses `nix-instantiate` / `nix show-derivation`.
+  Provides fields:
   * `name` (example: `python3.10-networkx-2.8.6`)
   * `version` (example: `2.8.6`)
-- available packages: uses `nix-env -qa --json` tool, memory
-  hungry. Provides fields:
+- available packages: uses `nix-env -qa --json` tool, memory hungry.
+  Provides fields:
   * [keyed from installed packages] `name` (example: `python3.10-networkx-2.8.6`)
   * `attribute`: `nixpkgs` attribute path (example: `nixos.python310Packages.networkx`)
   * `pname`: `name` with `version` component dropped (example: `nixos.python310Packages.networkx`)
