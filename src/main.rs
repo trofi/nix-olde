@@ -221,7 +221,10 @@ fn get_local_available_packages(nixpkgs: &Option<String>)
                     let prefetched: Archive =
                             serde_json::from_slice(p_u8.as_slice()).expect("valid json");
 
-                    // TODO: find might be shorter
+                    // TODO: instead of using last in the list consider
+                    // instantiating each of nixkogs inputs (and
+                    // recurse into inputs' inputs). That way we should
+                    // be able to match all possible packages.
                     for (iname, i) in prefetched.inputs {
                         if iname == "nixpkgs" {
                             a = i.path
