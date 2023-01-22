@@ -1,7 +1,9 @@
 // TODO: can we move it out to Cargo.toml? Or a separate file?
 mod cmd;
 mod error;
+mod opts;
 
+// package loading modules
 mod repology;
 mod installed;
 mod available;
@@ -10,27 +12,11 @@ use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::sync::atomic::{AtomicBool,Ordering};
 
-use clap::Parser;
-
 use crate::error::*;
-
-/// A tool to show outdated packages in current system according to
-/// repology.org database.
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Alternative path to <nixpkgs> location.
-    #[arg(short, long)]
-    nixpkgs: Option<String>,
-
-    /// Enable extra verbosity to report unexpected events,
-    /// fetch progress and so on.
-    #[arg(short, long)]
-    verbose: bool,
-}
+use crate::opts::*;
 
 fn main() -> Result<(), OldeError> {
-    let o = Args::parse();
+    let o = Opts::parse();
 
     let (r, i, a) = (|| {
        let mut r: Result<BTreeSet::<repology::Package>, OldeError> =
