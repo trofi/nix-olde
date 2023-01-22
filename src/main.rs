@@ -13,7 +13,7 @@ use std::collections::BTreeSet;
 use std::sync::atomic::{AtomicBool,Ordering};
 
 use crate::error::*;
-use crate::opts::*;
+use crate::opts::*; // TODO: how to avoid explicit import?
 
 fn main() -> Result<(), OldeError> {
     let o = Opts::parse();
@@ -26,9 +26,11 @@ fn main() -> Result<(), OldeError> {
        let mut a: Result<BTreeSet::<available::Package>, OldeError> =
            Ok(BTreeSet::new());
 
-       // If an error occured in other 9faster) threads then this
+       // If an error occured in other (faster) threads then this
        // flag is raised to signal cancellation.
-       let cancel_fetch = AtomicBool::new(false);
+       let cancel_flag = &AtomicBool::new(false);
+       let cancel = || { cancel_flag.store(true, Ordering::Relaxed); };
+       let poll_cancel = || { cancel_flag.load(Ordering::Relaxed) };
 
        // Each of threads is somewhat slow to proceed:
        // - Repology thread is network-bound
@@ -36,9 +38,9 @@ fn main() -> Result<(), OldeError> {
        std::thread::scope(|s| {
          s.spawn(|| {
              eprintln!("Fetching 'repology' ...");
-             r = repology::get_packages(o.verbose, &cancel_fetch);
+             r = repology::get_packages(o.verbose, &poll_cancel);
              if r.is_err() {
-                 cancel_fetch.store(true, Ordering::Relaxed);
+                 cancel();
                  eprintln!("... 'repology' failed.");
              } else {
                  eprintln!("... 'repology' done.");
@@ -48,7 +50,7 @@ fn main() -> Result<(), OldeError> {
              eprintln!("Fetching 'installed' ...");
              i = installed::get_packages(&o.nixpkgs);
              if i.is_err() {
-                 cancel_fetch.store(true, Ordering::Relaxed);
+                 cancel();
                  eprintln!("... 'installed' failed.");
              } else {
                  eprintln!("... 'installed' done.");
@@ -58,7 +60,7 @@ fn main() -> Result<(), OldeError> {
              eprintln!("Fetching 'available' ...");
              a = available::get_packages(&o.nixpkgs);
              if a.is_err() {
-                 cancel_fetch.store(true, Ordering::Relaxed);
+                 cancel();
                  eprintln!("... 'available' failed.");
              } else {
                  eprintln!("... 'available' done.");

@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 
 use serde_derive::Deserialize;
-use std::sync::atomic::{AtomicBool,Ordering};
 
 use crate::error::*;
 use crate::cmd::*;
@@ -27,7 +26,7 @@ pub(crate) struct Package {
 }
 
 /// Returns list of all outdated derivations according to repology.
-pub(crate) fn get_packages(verbose: bool, cancel_fetch: &AtomicBool)
+pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
     -> Result<BTreeSet<Package>, OldeError> {
     let mut r = BTreeSet::new();
 
@@ -37,7 +36,7 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &AtomicBool)
     let mut suffix: String = "".to_string();
 
     loop {
-        if cancel_fetch.load(Ordering::Relaxed) {
+        if cancel_fetch() {
             return Err(OldeError::Canceled(String::from("Repology fetch")));
         }
         let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
