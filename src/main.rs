@@ -5,30 +5,9 @@ use std::sync::atomic::{AtomicBool,Ordering};
 
 use clap::Parser;
 use serde_derive::Deserialize;
-use thiserror::Error;
 
-#[derive(Error, Debug, Clone)]
-enum OldeError {
-    /// Running external command failed for some reason.
-    #[error("command {cmd:?} failed: {output:?}")]
-    CommandFailed {
-        cmd: Vec<String>,
-        output: std::process::Output,
-    },
-
-    // Multiple errors happened. See individual entries for an
-    // explanation.
-    #[error("multiple errors: {0:?}")]
-    MultipleErrors(Vec<OldeError>),
-
-    // Cancelled externally.
-    #[error("canceled {0}")]
-    Canceled(String),
-
-    // Unexpected empty output.
-    #[error("unexpected empty output from {0}")]
-    EmptyOutput(String),
-}
+mod error;
+use error::*;
 
 /// Runs 'cmd' and returns stdout or failure.
 fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
