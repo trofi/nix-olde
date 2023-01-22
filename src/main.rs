@@ -1,29 +1,14 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use std::process::Command;
 use std::sync::atomic::{AtomicBool,Ordering};
 
 use clap::Parser;
 use serde_derive::Deserialize;
 
 mod error;
-use error::*;
-
-/// Runs 'cmd' and returns stdout or failure.
-fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
-    let output = Command::new(args[0]).args(&args[1..])
-                      .output()
-                      .expect("Failed to run command");
-
-    if !output.status.success() {
-       return Err(OldeError::CommandFailed {
-            cmd: args.into_iter().map(|a| a.to_string()).collect(),
-            output,
-        });
-    }
-
-    Ok(output.stdout)
-}
+use crate::error::*;
+mod cmd;
+use crate::cmd::*;
 
 /// Installed packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
