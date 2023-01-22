@@ -69,22 +69,18 @@ fn main() -> Result<(), OldeError> {
     }
     let (repology_ps, installed_ps, available_ps) = (r?, i?, a?);
 
-    // 1. go through all local `.drv' files
-    // 2. get 'name' from
-    // 3. resolve 'name' to 'pname' (via available packages, 'pname' in drv is unstable)
-    // 4. match 'pname' against repology database
-
-    // Installed packages not found in 'available'. Should be always empty unless bugs.
+    // Installed packages not found in 'available'. Should be always empty.
+    // The exceptions are intermediate derivations for scripts and during
+    // bootstrap.
     let mut missing_available: Vec<&str> = Vec::new();
 
-    // Package is a local rename of a well known package or repology did not parse it.
+    // Packages not found in Repology database. Usually a package rename.
     let mut missing_repology: Vec<(&str, &str)> = Vec::new();
 
     let mut known_versions: BTreeMap<&str, (&Option<String>, BTreeSet<&str>, BTreeSet<&str>)> = BTreeMap::new();
 
-    // TODO: below is a very naive JOIN. Try the alternatives:
-    // 1. Map with needed keys.
-    // 2. sqlite3's :memory: indices and direct JOIN instead
+    // Map installed => available => repology. Sometimes mapping is
+    // one-to-many.
     for lp in &installed_ps {
         let mut found_in_available = false;
 
