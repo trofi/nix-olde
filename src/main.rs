@@ -57,6 +57,7 @@ fn main() -> Result<(), OldeError> {
 
        (r, i, a)
     }) ();
+    eprintln!();
 
     // Report all encountered errors
     if r.is_err() || i.is_err() || a.is_err() {

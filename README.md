@@ -61,12 +61,13 @@ $ ./mkrun.bash -n $(realpath ~/n)
 ```
 $ cargo build && target/debug/nix-olde
 ...
-Fetching 'installed' ...
-Fetching 'repology' ...
-Fetching 'available' ...
-... 'available' done.
-... 'installed' done.
-... 'repology' done.
+Fetching 'repology'
+Fetching 'available'
+Fetching 'installed'
+'installed' done, took 6.10 s.
+'available' done, took 12.22 s.
+'repology' done, took 75.38 s.
+
 repology a52dec "0.8.0" | nixpkgs {"0.7.4"} {"nixos.a52dec"}
 repology alsa-lib "1.2.8" | nixpkgs {"1.2.7.2"} {"nixos.alsa-lib"}
 repology alsa-ucm-conf "1.2.8" | nixpkgs {"1.2.7.1"} {"nixos.alsa-ucm-conf"}
