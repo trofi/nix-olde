@@ -33,7 +33,7 @@ fn main() -> Result<(), OldeError> {
     let o = Args::parse();
 
     let (r, i, a) = (|| {
-       let mut r: Result<BTreeSet::<repology::Package>,       OldeError> =
+       let mut r: Result<BTreeSet::<repology::Package>, OldeError> =
            Ok(BTreeSet::new());
        let mut i: Result<BTreeSet::<installed::Package>, OldeError> =
            Ok(BTreeSet::new());
