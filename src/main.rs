@@ -2,6 +2,7 @@
 mod cmd;
 mod error;
 mod opts;
+mod progress;
 
 // package loading modules
 mod repology;
@@ -14,6 +15,7 @@ use std::sync::atomic::{AtomicBool,Ordering};
 
 use crate::error::*;
 use crate::opts::*; // TODO: how to avoid explicit import?
+use crate::progress::*;
 
 fn main() -> Result<(), OldeError> {
     let o = Opts::parse();
@@ -37,34 +39,19 @@ fn main() -> Result<(), OldeError> {
        // - Installed and available threads are CPU-bound
        std::thread::scope(|s| {
          s.spawn(|| {
-             eprintln!("Fetching 'repology' ...");
+             let mut p = TaskProgress::new("repology");
              r = repology::get_packages(o.verbose, &poll_cancel);
-             if r.is_err() {
-                 cancel();
-                 eprintln!("... 'repology' failed.");
-             } else {
-                 eprintln!("... 'repology' done.");
-             }
+             if r.is_err() { cancel(); p.fail(); }
          });
          s.spawn(|| {
-             eprintln!("Fetching 'installed' ...");
+             let mut p = TaskProgress::new("installed");
              i = installed::get_packages(&o.nixpkgs);
-             if i.is_err() {
-                 cancel();
-                 eprintln!("... 'installed' failed.");
-             } else {
-                 eprintln!("... 'installed' done.");
-             }
+             if i.is_err() { cancel(); p.fail(); }
          });
          s.spawn(|| {
-             eprintln!("Fetching 'available' ...");
+             let mut p = TaskProgress::new("available");
              a = available::get_packages(&o.nixpkgs);
-             if a.is_err() {
-                 cancel();
-                 eprintln!("... 'available' failed.");
-             } else {
-                 eprintln!("... 'available' done.");
-             }
+             if a.is_err() { cancel(); p.fail(); }
          });
        });
 
