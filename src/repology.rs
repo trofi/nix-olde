@@ -49,14 +49,14 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
         //   "python:networkx": [
         //     {
         //       "repo": "nix_unstable",
-        //       "name": "python3.10-networkx",
+        //       "visiblenamename": "python3.10-networkx",
         //       "version": "2.8.6",
         //       "status": "outdated",
         //     },
 
         #[derive(Deserialize, Debug)]
         /// Dervivation description with subset of fields needed to detect outdated packages.
-        struct Repology { repo: String, name: Option<String>, version: String, status: String }
+        struct Repology { repo: String, visiblename: Option<String>, version: String, status: String }
 
         let pkgs: BTreeMap<String, Vec<Repology>> =
             serde_json::from_slice(contents_u8.as_slice()).expect("valid json");
@@ -76,7 +76,7 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
             for v in vs {
                 if v.repo != "nix_unstable" { continue }
 
-                if v.name.is_none() {
+                if v.visiblename.is_none() {
                     eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
                     if verbose {
                         eprintln!("JSON for entry: {:?}", String::from_utf8(contents_u8.clone()));
@@ -86,7 +86,7 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
 
                 r.insert(Package {
                     repology_name: n.clone(),
-                    name: v.name.clone().expect("name"),
+                    name: v.visiblename.clone().expect("name"),
                     version: v.version.clone(),
                     status: v.status.clone(),
                     latest: latest.clone(),
