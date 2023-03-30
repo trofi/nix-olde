@@ -76,6 +76,14 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
             for v in vs {
                 if v.repo != "nix_unstable" { continue }
 
+                if v.name.is_none() {
+                    eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
+                    if verbose {
+                        eprintln!("JSON for entry: {:?}", String::from_utf8(contents_u8.clone()));
+                    }
+                    continue
+                }
+
                 r.insert(Package {
                     repology_name: n.clone(),
                     name: v.name.clone().expect("name"),
