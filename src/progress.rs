@@ -15,7 +15,9 @@ impl<'a> TaskProgress<'a> {
             started: std::time::Instant::now(),
         }
     }
-    pub(crate) fn fail(&mut self) { self.failed = true; }
+    pub(crate) fn fail(&mut self) {
+        self.failed = true;
+    }
 }
 
 impl Drop for TaskProgress<'_> {
@@ -28,4 +30,3 @@ impl Drop for TaskProgress<'_> {
         eprintln!("'{}' {}, took {:.2} s.", self.name, status, took);
     }
 }
-

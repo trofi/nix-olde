@@ -19,34 +19,26 @@ contains more detailed description of dependencies.
 
 # Running it
 
-There is no `Cargo.lock` package or uploaded crate just yet. I'm not
-sure if such a small tool warrants it. Thus you need to clone and build
-it using `cargo` build tool:
-
 ```
-$ git clone https://github.com/trofi/nix-olde.git
-$ cd nix-olde
-$ cargo build
+$ nix run github:trofi/nix-olde
 ```
-
-Now you should be ready to run it.
 
 Diff against current system:
 
 ```
-$ ./target/debug/nix-olde
+$ nix-olde
 ```
 
 Diff against latest `staging`:
 
 ```
-$ ./target/debug/nix-olde -n https://github.com/NixOS/nixpkgs/archive/refs/heads/staging.tar.gz
+$ nix-olde -n https://github.com/NixOS/nixpkgs/archive/refs/heads/staging.tar.gz
 ```
 
 Or against local checkout:
 
 ```
-$ ./target/debug/nix-olde -n ./nixpkgs
+$ nix-olde -n ./nixpkgs
 ```
 
 I usually use small shell wrapper to build-and-run against local

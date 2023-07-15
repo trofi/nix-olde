@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 
+# to upgrade
+# cargo upgrade
+# or
+# cargo upgrade --incompatible
 [dependencies]
-clap = { version = "*", features = ["derive"] }
-gethostname = "*"
-serde = "*"
-serde_derive = "*"
-serde_json = "*"
-thiserror = "*"
+clap = { version = "4", features = ["derive"] }
+gethostname = "0"
+serde = "1"
+serde_derive = "1"
+serde_json = "1"
+thiserror = "1"

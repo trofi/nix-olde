@@ -1,0 +1,18 @@
+name: "Test"
+on:
+  pull_request:
+    types: [opened,edited,synchronize,reopened]
+  push:
+    branches:
+      - 'main'
+jobs:
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    if: github.repository_owner == 'trofi'
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v22
+    - run: nix build --extra-experimental-features nix-command -L -f . -I nixpkgs=https://github.com/NixOS/nixpkgs/archive/nixpkgs-unstable.tar.gz --show-trace

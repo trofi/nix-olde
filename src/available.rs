@@ -16,16 +16,19 @@ pub(crate) struct Package {
 }
 
 /// Returns list of all available packages in parsed form.
-pub(crate) fn get_packages(nixpkgs: &Option<String>)
-    -> Result<BTreeSet<Package>, OldeError> {
+pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>, OldeError> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
     let mut cmd: Vec<&str> = vec![
         "nix-env",
         "-qa",
         "--json",
-        "--arg", "config", "import <nixpkgs/pkgs/top-level/packages-config.nix>",
-        "--option", "build-users-group", "\"\"",
+        "--arg",
+        "config",
+        "import <nixpkgs/pkgs/top-level/packages-config.nix>",
+        "--option",
+        "build-users-group",
+        "\"\"",
     ];
     let mut a = String::new();
     let na: String;
@@ -38,9 +41,15 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>)
 
             let r = run_cmd(&[
                 "nix",
-                "--extra-experimental-features", "nix-command",
-                "--extra-experimental-features", "flakes",
-                "flake", "archive", "/etc/nixos", "--json"]);
+                "--extra-experimental-features",
+                "nix-command",
+                "--extra-experimental-features",
+                "flakes",
+                "flake",
+                "archive",
+                "/etc/nixos",
+                "--json",
+            ]);
             // Assume simplest form:
             // { "inputs": { "nixpkgs": {
             //                 "inputs": {},
@@ -50,16 +59,19 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>)
                 Err(_) => {
                     // Not a flake-based system? TODO: when verbose dump
                     // here the error to ease debugging.
-                },
+                }
                 Ok(p_u8) => {
-
                     #[derive(Deserialize)]
-                    struct Input { path: String }
+                    struct Input {
+                        path: String,
+                    }
                     #[derive(Deserialize)]
-                    struct Archive { inputs: BTreeMap<String, Input> }
+                    struct Archive {
+                        inputs: BTreeMap<String, Input>,
+                    }
 
                     let prefetched: Archive =
-                            serde_json::from_slice(p_u8.as_slice()).expect("valid json");
+                        serde_json::from_slice(p_u8.as_slice()).expect("valid json");
 
                     // TODO: instead of using last in the list consider
                     // instantiating each of nixkogs inputs (and
@@ -77,13 +89,13 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>)
                         cmd.extend_from_slice(&["-I", &na]);
                         cmd.extend_from_slice(&["-f", &a]);
                     }
-                },
+                }
             }
-        },
+        }
         Some(p) => {
             na = format!("nixpkgs={p}");
             cmd.extend_from_slice(&["-I", &na]);
-            cmd.extend_from_slice(&["-f", &p]);
+            cmd.extend_from_slice(&["-f", p]);
         }
     }
     let ps_u8 = run_cmd(&cmd)?;
@@ -94,24 +106,31 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>)
     // },
 
     #[derive(Deserialize)]
-    struct Available { name: String, pname: String, version: String }
+    struct Available {
+        name: String,
+        pname: String,
+        version: String,
+    }
 
     let ps: BTreeMap<String, Available> =
         serde_json::from_slice(ps_u8.as_slice()).expect("valid json");
 
-    let r: BTreeSet<_> = ps.iter().filter_map(|(attr, a)|
-        Some(Package{
-            attribute: attr.clone(),
-            name: a.name.clone(),
-            pname: a.pname.clone(),
-            version: a.version.clone(),
+    let r: BTreeSet<_> = ps
+        .iter()
+        .filter_map(|(attr, a)| {
+            Some(Package {
+                attribute: attr.clone(),
+                name: a.name.clone(),
+                pname: a.pname.clone(),
+                version: a.version.clone(),
+            })
         })
-    ).collect();
-
+        .collect();
 
     // Misconfigured nixpkgs, not a NixOS or flake-based system?
-    if r.is_empty() { return Err(OldeError::EmptyOutput(String::from("nix-env query"))); }
+    if r.is_empty() {
+        return Err(OldeError::EmptyOutput(String::from("nix-env query")));
+    }
 
     Ok(r)
 }
-
