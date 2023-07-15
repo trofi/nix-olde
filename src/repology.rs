@@ -47,7 +47,7 @@ pub(crate) fn get_packages(
         if verbose {
             eprintln!("Fetching from repology: {:?}", suffix);
         }
-        let contents_u8 = run_cmd(&["curl", "--compressed", "-s", &url])?;
+        let contents_u8 = run_cmd(&["curl", "--compressed", &url])?;
         // {
         //   "python:networkx": [
         //     {
