@@ -7,7 +7,7 @@ use crate::cmd::*;
 use crate::error::*;
 
 /// Locally available packages with available 'pname' and 'version' attributes.
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub(crate) struct Package {
     pub(crate) attribute: String,
     pub(crate) name: String,
@@ -61,11 +61,11 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>
                     // here the error to ease debugging.
                 }
                 Ok(p_u8) => {
-                    #[derive(Deserialize)]
+                    #[derive(Deserialize, Debug)]
                     struct Input {
                         path: String,
                     }
-                    #[derive(Deserialize)]
+                    #[derive(Deserialize, Debug)]
                     struct Archive {
                         inputs: BTreeMap<String, Input>,
                     }
@@ -105,7 +105,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>
     //   "version": "2.8.6"
     // },
 
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Debug)]
     struct Available {
         name: String,
         pname: String,
