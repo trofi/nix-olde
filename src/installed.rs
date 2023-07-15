@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::fs;
 
 use serde_derive::Deserialize;
 
@@ -16,8 +17,10 @@ pub(crate) struct Package {
 }
 
 fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>) -> Result<String, OldeError> {
+    let config_dir = fs::canonicalize("/etc/nixos").expect("/etc/nixos does not exist");
     let flake_sys_attr = format!(
-        "/etc/nixos#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
+        "{}#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
+        config_dir.to_string_lossy(),
         gethostname::gethostname()
             .into_string()
             .expect("valid hostname")
