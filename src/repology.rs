@@ -3,8 +3,8 @@ use std::collections::BTreeSet;
 
 use serde_derive::Deserialize;
 
-use crate::error::*;
 use crate::cmd::*;
+use crate::error::*;
 
 /// Installed packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -26,8 +26,10 @@ pub(crate) struct Package {
 }
 
 /// Returns list of all outdated derivations according to repology.
-pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
-    -> Result<BTreeSet<Package>, OldeError> {
+pub(crate) fn get_packages(
+    verbose: bool,
+    cancel_fetch: &dyn Fn() -> bool,
+) -> Result<BTreeSet<Package>, OldeError> {
     let mut r = BTreeSet::new();
 
     // We pull in all package ingo py paginating through
@@ -39,7 +41,8 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
         if cancel_fetch() {
             return Err(OldeError::Canceled(String::from("Repology fetch")));
         }
-        let url = format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
+        let url =
+            format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
         if verbose {
             eprintln!("Fetching from repology: {:?}", suffix);
@@ -56,7 +59,12 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
 
         #[derive(Deserialize, Debug)]
         /// Dervivation description with subset of fields needed to detect outdated packages.
-        struct Repology { repo: String, visiblename: Option<String>, version: String, status: String }
+        struct Repology {
+            repo: String,
+            visiblename: Option<String>,
+            version: String,
+            status: String,
+        }
 
         let pkgs: BTreeMap<String, Vec<Repology>> =
             serde_json::from_slice(contents_u8.as_slice()).expect("valid json");
@@ -65,23 +73,32 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
         for (n, vs) in &pkgs {
             next_suffix = n.clone() + "/";
 
-            let olatest_entry =
-                vs.iter()
-                  .find_map(|e| if e.status == "newest" || e.status == "unique" { Some(e) } else { None });
+            let olatest_entry = vs.iter().find_map(|e| {
+                if e.status == "newest" || e.status == "unique" {
+                    Some(e)
+                } else {
+                    None
+                }
+            });
             let latest = olatest_entry.map(|e| e.version.clone());
 
             // There can be multiple nix_unstable package entries for a
             // single repology entry: pycropto vs pycryptodome.
             // Store all of them.
             for v in vs {
-                if v.repo != "nix_unstable" { continue }
+                if v.repo != "nix_unstable" {
+                    continue;
+                }
 
                 if v.visiblename.is_none() {
                     eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
                     if verbose {
-                        eprintln!("JSON for entry: {:?}", String::from_utf8(contents_u8.clone()));
+                        eprintln!(
+                            "JSON for entry: {:?}",
+                            String::from_utf8(contents_u8.clone())
+                        );
                     }
-                    continue
+                    continue;
                 }
 
                 r.insert(Package {
@@ -93,10 +110,11 @@ pub(crate) fn get_packages(verbose: bool, cancel_fetch: &dyn Fn() -> bool)
                 });
             }
         }
-        if suffix == next_suffix { break }
+        if suffix == next_suffix {
+            break;
+        }
         suffix = next_suffix;
     }
 
     Ok(r)
 }
-
