@@ -8,7 +8,7 @@ use crate::cmd::*;
 use crate::error::*;
 
 /// Installed packages with available 'pname' and 'version' attributes.
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub(crate) struct Package {
     /// Full not-quite-'pname' + 'version' from package environment.
     pub(crate) name: String,
@@ -109,12 +109,12 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>
     //       "version": "2.8.6"
     //       ...
 
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Debug)]
     struct DrvEnv {
         name: Option<String>,
         version: Option<String>,
     }
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Debug)]
     /// Dervivation description with subset of fields needed to detect outdated packages.
     struct Installed {
         env: DrvEnv,
