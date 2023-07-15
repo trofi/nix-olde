@@ -83,7 +83,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>)
         Some(p) => {
             na = format!("nixpkgs={p}");
             cmd.extend_from_slice(&["-I", &na]);
-            cmd.extend_from_slice(&["-f", &p]);
+            cmd.extend_from_slice(&["-f", p]);
         }
     }
     let ps_u8 = run_cmd(&cmd)?;

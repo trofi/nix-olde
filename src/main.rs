@@ -20,7 +20,7 @@ use crate::progress::*;
 fn main() -> Result<(), OldeError> {
     let o = Opts::parse();
 
-    let (r, i, a) = (|| {
+    let (r, i, a) = {
        let mut r: Result<BTreeSet::<repology::Package>, OldeError> =
            Ok(BTreeSet::new());
        let mut i: Result<BTreeSet::<installed::Package>, OldeError> =
@@ -56,7 +56,7 @@ fn main() -> Result<(), OldeError> {
        });
 
        (r, i, a)
-    }) ();
+    };
     eprintln!();
 
     // Report all encountered errors
@@ -122,7 +122,7 @@ fn main() -> Result<(), OldeError> {
     for (rn, (olv, vs, ats)) in &known_versions {
         if let Some(lv) = olv {
           // Do not print outdated versions if there is use of most recet package
-          if vs.contains(&lv as &str) { continue }
+          if vs.contains(lv as &str) { continue }
         }
         println!("repology {} {:?} | nixpkgs {:?} {:?}",
             rn, (*olv).clone().unwrap_or("<none>".to_string()), vs, ats);
@@ -141,12 +141,10 @@ fn main() -> Result<(), OldeError> {
     if o.verbose {
         eprintln!();
         eprintln!("Installed packages missing in available list: {:?}", missing_available);
-    } else {
-        if !missing_available.is_empty() {
-            eprintln!();
-            eprintln!("Some installed packages are missing in available list: {}", missing_available.len());
-            eprintln!("  Add '--verbose' to get it's full list.");
-        }
+    } else if !missing_available.is_empty() {
+        eprintln!();
+        eprintln!("Some installed packages are missing in available list: {}", missing_available.len());
+        eprintln!("  Add '--verbose' to get it's full list.");
     }
     Ok(())
 }

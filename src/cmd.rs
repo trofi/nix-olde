@@ -10,7 +10,7 @@ pub(crate) fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
 
     if !output.status.success() {
        return Err(OldeError::CommandFailed {
-            cmd: args.into_iter().map(|a| a.to_string()).collect(),
+            cmd: args.iter().map(|a| a.to_string()).collect(),
             output,
         });
     }
