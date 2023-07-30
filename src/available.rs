@@ -17,7 +17,7 @@ pub(crate) struct Package {
 }
 
 /// Returns list of all available packages in parsed form.
-pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>, OldeError> {
+pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<BTreeSet<Package>, OldeError> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
     let mut cmd: Vec<&str> = vec![
@@ -40,7 +40,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>
             // input and explicitly pass it in. If it fails we just
             // leave things as is.
             //
-            let config_dir = fs::canonicalize("/etc/nixos").expect("/etc/nixos does not exist");
+            let config_dir = fs::canonicalize(nixos_flake).expect(&format!("{} does not exist", nixos_flake));
 
             let r = run_cmd(&[
                 "nix",

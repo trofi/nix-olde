@@ -16,8 +16,8 @@ pub(crate) struct Package {
     pub(crate) version: String,
 }
 
-fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>) -> Result<String, OldeError> {
-    let config_dir = fs::canonicalize("/etc/nixos").expect("/etc/nixos does not exist");
+fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<String, OldeError> {
+    let config_dir = fs::canonicalize(nixos_flake).expect(&format!("{} does not exist", nixos_flake));
     let flake_sys_attr = format!(
         "{}#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
         config_dir.to_string_lossy(),
@@ -70,11 +70,11 @@ fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>) -> Result<Str
 
 /// Returns store path for local system derivation to later extract
 /// all packages used to build it.
-fn get_local_system_derivation(nixpkgs: &Option<String>) -> Result<String, OldeError> {
+fn get_local_system_derivation(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<String, OldeError> {
     let mut errs = Vec::new();
 
     // Is there a helper for that?
-    let fr = get_local_system_derivation_via_flakes(nixpkgs);
+    let fr = get_local_system_derivation_via_flakes(nixpkgs, nixos_flake);
     if fr.is_ok() {
         return fr;
     }
@@ -91,8 +91,8 @@ fn get_local_system_derivation(nixpkgs: &Option<String>) -> Result<String, OldeE
 
 /// Returns list of all used derivations in parsed form.
 // TODO: add parameters like system expression.
-pub(crate) fn get_packages(nixpkgs: &Option<String>) -> Result<BTreeSet<Package>, OldeError> {
-    let drv_path = get_local_system_derivation(nixpkgs)?;
+pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<BTreeSet<Package>, OldeError> {
+    let drv_path = get_local_system_derivation(nixpkgs, nixos_flake)?;
     let drvs_u8 = run_cmd(&[
         "nix",
         "--extra-experimental-features",

@@ -13,4 +13,8 @@ pub(crate) struct Opts {
     /// fetch progress and so on.
     #[arg(short, long)]
     pub(crate) verbose: bool,
+
+    /// Pass a system flake alternative to /etc/nixos default.
+    #[arg(short, long)]
+    pub(crate) flake: Option<String>,
 }

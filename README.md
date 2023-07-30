@@ -95,6 +95,7 @@ Usage: nix-olde [OPTIONS]
 Options:
   -n, --nixpkgs <NIXPKGS>  Alternative path to <nixpkgs> location
   -v, --verbose            Enable extra verbosity to report unexpected events, fetch progress and so on
+  -f, --flake <FLAKE>      Pass a system flake alternative to /etc/nixos default
   -h, --help               Print help
   -V, --version            Print version
 ```
@@ -102,6 +103,9 @@ Options:
 `--nixpkgs` / `-n` is most useful when you are looking for packages that
 were not yet updated in a particular development branch of `nixpkgs`
 repository (usually `staging` or `master`).
+
+`--flake` / `-f` is useful for evaluation of system different from the
+default.
 
 # How `nix-olde` works
 

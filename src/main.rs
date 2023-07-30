@@ -19,6 +19,10 @@ use crate::progress::*;
 
 fn main() -> Result<(), OldeError> {
     let o = Opts::parse();
+    // TODO: add support for attribute selection as well:
+    //   /etc/nixos#foo or github:foo/bar#baz
+    // should both produce full path to an attribute.
+    let nixos_flake = o.flake.unwrap_or("/etc/nixos".to_string());
 
     let (r, i, a) = {
         let mut r: Result<BTreeSet<repology::Package>, OldeError> = Ok(BTreeSet::new());
@@ -47,7 +51,7 @@ fn main() -> Result<(), OldeError> {
             });
             s.spawn(|| {
                 let mut p = TaskProgress::new("installed");
-                i = installed::get_packages(&o.nixpkgs);
+                i = installed::get_packages(&o.nixpkgs, &nixos_flake);
                 if i.is_err() {
                     cancel();
                     p.fail();
@@ -55,7 +59,7 @@ fn main() -> Result<(), OldeError> {
             });
             s.spawn(|| {
                 let mut p = TaskProgress::new("available");
-                a = available::get_packages(&o.nixpkgs);
+                a = available::get_packages(&o.nixpkgs, &nixos_flake);
                 if a.is_err() {
                     cancel();
                     p.fail();
