@@ -27,7 +27,6 @@ pub(crate) struct Package {
 
 /// Returns list of all outdated derivations according to repology.
 pub(crate) fn get_packages(
-    verbose: bool,
     cancel_fetch: &dyn Fn() -> bool,
 ) -> Result<BTreeSet<Package>, OldeError> {
     let mut r = BTreeSet::new();
@@ -44,9 +43,7 @@ pub(crate) fn get_packages(
         let url =
             format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
-        if verbose {
-            eprintln!("Fetching from repology: {:?}", suffix);
-        }
+        log::debug!("Fetching from repology: {:?}", suffix);
         let contents_u8 = run_cmd(&["curl", "--compressed", &url])?;
         // {
         //   "python:networkx": [
@@ -92,12 +89,10 @@ pub(crate) fn get_packages(
 
                 if v.visiblename.is_none() {
                     eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
-                    if verbose {
-                        eprintln!(
-                            "JSON for entry: {:?}",
-                            String::from_utf8(contents_u8.clone())
-                        );
-                    }
+                    log::debug!(
+                        "JSON for entry: {:?}",
+                        String::from_utf8(contents_u8.clone())
+                    );
                     continue;
                 }
 

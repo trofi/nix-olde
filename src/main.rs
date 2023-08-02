@@ -11,6 +11,7 @@ mod repology;
 
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::error::*;
@@ -19,6 +20,11 @@ use crate::progress::*;
 
 fn main() -> Result<(), OldeError> {
     let o = Opts::parse();
+    env_logger::Builder::new()
+        .format(|buf, record| writeln!(buf, "{}: {}", record.level(), record.args()))
+        .filter_level(o.verbose.log_level_filter())
+        .init();
+
     // TODO: add support for attribute selection as well:
     //   /etc/nixos#foo or github:foo/bar#baz
     // should both produce full path to an attribute.
@@ -43,7 +49,7 @@ fn main() -> Result<(), OldeError> {
         std::thread::scope(|s| {
             s.spawn(|| {
                 let mut p = TaskProgress::new("repology");
-                r = repology::get_packages(o.verbose, &poll_cancel);
+                r = repology::get_packages(&poll_cancel);
                 if r.is_err() {
                     cancel();
                     p.fail();
@@ -172,7 +178,7 @@ fn main() -> Result<(), OldeError> {
 
     missing_available.sort();
     missing_repology.sort();
-    if o.verbose {
+    if log::log_enabled!(log::Level::Debug) {
         eprintln!();
         eprintln!(
             "Installed packages missing in available list: {:?}",

@@ -1,4 +1,5 @@
 pub use clap::Parser;
+use clap_verbosity_flag::{Verbosity, InfoLevel};
 
 /// A tool to show outdated packages in current system according to
 /// repology.org database.
@@ -11,8 +12,8 @@ pub(crate) struct Opts {
 
     /// Enable extra verbosity to report unexpected events,
     /// fetch progress and so on.
-    #[arg(short, long)]
-    pub(crate) verbose: bool,
+    #[command(flatten)]
+    pub(crate) verbose: Verbosity<InfoLevel>,
 
     /// Pass a system flake alternative to /etc/nixos default.
     #[arg(short, long)]
