@@ -1,7 +1,15 @@
 version: 2
 updates:
-
   - package-ecosystem: "github-actions"
+    commit-message:
+      include: "scope"
+      prefix: "Actions"
+    directory: "/"
+    labels:
+      - "enhancement"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "cargo"
     commit-message:
       include: "scope"
       prefix: "Actions"
