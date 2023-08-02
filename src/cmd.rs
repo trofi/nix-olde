@@ -8,6 +8,8 @@ pub(crate) fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
         .args(&args[1..])
         .output()
         .expect("Failed to run command");
+    log::debug!("Running {:?}: {:?}", args, output.status);
+    log::trace!("Result of {:?}: {:?}", args, output);
 
     if !output.status.success() {
         return Err(OldeError::CommandFailed {
