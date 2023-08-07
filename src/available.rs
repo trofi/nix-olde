@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use std::fs;
 
 use serde_derive::Deserialize;
 
@@ -42,9 +41,6 @@ pub(crate) fn get_packages(
             // But in system with flakes we need to extract `nixpkgs`
             // input and explicitly pass it in. If it fails we just
             // leave things as is.
-            //
-            let config_dir = fs::canonicalize(nixos_flake)?;
-
             let r = run_cmd(&[
                 "nix",
                 "--extra-experimental-features",
@@ -53,7 +49,7 @@ pub(crate) fn get_packages(
                 "flakes",
                 "flake",
                 "archive",
-                &config_dir.to_string_lossy(),
+                nixos_flake,
                 "--json",
             ]);
             // Assume simplest form:
