@@ -87,22 +87,25 @@ pub(crate) fn get_packages(
                     continue;
                 }
 
-                if v.visiblename.is_none() {
-                    eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
-                    log::debug!(
-                        "JSON for entry: {:?}",
-                        String::from_utf8(contents_u8.clone())
-                    );
-                    continue;
+                match &v.visiblename {
+                    None => {
+                        eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
+                        log::debug!(
+                            "JSON for entry: {:?}",
+                            String::from_utf8(contents_u8.clone())
+                        );
+                        continue;
+                    },
+                    Some(vn) => {
+                        r.insert(Package {
+                            repology_name: n.clone(),
+                            name: vn.clone(),
+                            version: v.version.clone(),
+                            status: v.status.clone(),
+                            latest: latest.clone(),
+                        });
+                    },
                 }
-
-                r.insert(Package {
-                    repology_name: n.clone(),
-                    name: v.visiblename.clone().expect("name"),
-                    version: v.version.clone(),
-                    status: v.status.clone(),
-                    latest: latest.clone(),
-                });
             }
         }
         if suffix == next_suffix {
