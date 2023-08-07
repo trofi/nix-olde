@@ -28,6 +28,7 @@ fn main() -> Result<(), OldeError> {
     // TODO: add support for attribute selection as well:
     //   /etc/nixos#foo or github:foo/bar#baz
     // should both produce full path to an attribute.
+    // TODO: add support for more general flake syntax from `nix flake --help`.
     let nixos_flake = o.flake.unwrap_or("/etc/nixos".to_string());
 
     let (r, i, a) = {
