@@ -22,6 +22,7 @@ use crate::progress::*;
 
 /// Ideally we would just use flake path as is. In practice we have to
 /// dereference symlinks for local paths.
+/// TODO: move it's handling to `crate::flake`.
 fn resolve_flake(s: String) -> String {
     match std::fs::canonicalize(s.clone()) {
         Err(e) => {
