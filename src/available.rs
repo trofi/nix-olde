@@ -59,8 +59,7 @@ pub(crate) fn get_packages(
             //             }
             match r {
                 Err(_) => {
-                    // Not a flake-based system? TODO: when verbose dump
-                    // here the error to ease debugging.
+                    log::debug!("Failed to fetch flake archive. Not a flake based system?");
                 }
                 Ok(p_u8) => {
                     #[derive(Deserialize, Debug)]
