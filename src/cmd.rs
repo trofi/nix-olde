@@ -6,8 +6,7 @@ use crate::error::*;
 pub(crate) fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
     let output = Command::new(args[0])
         .args(&args[1..])
-        .output()
-        .expect("Failed to run command");
+        .output()?;
     log::debug!("Running {:?}: {:?}", args, output.status);
     log::trace!("Result of {:?}: {:?}", args, output);
 
