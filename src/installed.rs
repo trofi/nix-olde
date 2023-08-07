@@ -121,7 +121,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
     }
 
     let drvs: BTreeMap<String, Installed> =
-        serde_json::from_slice(drvs_u8.as_slice()).expect("valid json");
+        serde_json::from_slice(drvs_u8.as_slice())?;
 
     let r: BTreeSet<_> = drvs
         .iter()

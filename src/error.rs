@@ -22,13 +22,22 @@ pub(crate) enum OldeError {
     #[error("unexpected empty output from {0}")]
     EmptyOutput(String),
 
-    // Any other error not worh a special status.
-    #[error("Error: {0}")]
+    // IO error: symlink resolution, file read failures.
+    #[error("IO error: {0}")]
     IOError(std::io::Error),
+
+    #[error("JSON parse error: {0}")]
+    JSONError(serde_json::Error)
 }
 
 impl From<std::io::Error> for OldeError {
     fn from(error: std::io::Error) -> Self {
         OldeError::IOError(error)
+    }
+}
+
+impl From<serde_json::Error> for OldeError {
+    fn from(error: serde_json::Error) -> Self {
+        OldeError::JSONError(error)
     }
 }

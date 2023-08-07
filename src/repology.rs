@@ -64,7 +64,7 @@ pub(crate) fn get_packages(
         }
 
         let pkgs: BTreeMap<String, Vec<Repology>> =
-            serde_json::from_slice(contents_u8.as_slice()).expect("valid json");
+            serde_json::from_slice(contents_u8.as_slice())?;
 
         let mut next_suffix = suffix.clone();
         for (n, vs) in &pkgs {

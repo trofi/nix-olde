@@ -74,7 +74,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
                     }
 
                     let prefetched: Archive =
-                        serde_json::from_slice(p_u8.as_slice()).expect("valid json");
+                        serde_json::from_slice(p_u8.as_slice())?;
 
                     // TODO: instead of using last in the list consider
                     // instantiating each of nixkogs inputs (and
@@ -116,7 +116,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
     }
 
     let ps: BTreeMap<String, Available> =
-        serde_json::from_slice(ps_u8.as_slice()).expect("valid json");
+        serde_json::from_slice(ps_u8.as_slice())?;
 
     let r: BTreeSet<_> = ps
         .iter()
