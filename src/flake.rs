@@ -7,7 +7,7 @@ pub(crate) struct Flake<'a> {
 
 impl Flake<'_> {
     pub(crate) fn new<'a>(s: &'a str) -> Flake<'a> {
-        Flake{flake: s}
+        Flake { flake: s }
     }
 
     /// The path part of original flake.
@@ -24,6 +24,7 @@ impl Flake<'_> {
             "nixosConfigurations.{}.config.system.build.toplevel.drvPath",
             gethostname::gethostname()
                 .into_string()
-                .expect("valid hostname"))
+                .expect("valid hostname")
+        )
     }
 }

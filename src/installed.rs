@@ -20,11 +20,7 @@ fn get_local_system_derivation_via_flakes(
     nixpkgs: &Option<String>,
     nixos_flake: &Flake,
 ) -> Result<String, OldeError> {
-    let flake_sys_attr = format!(
-        "{}#{}",
-        nixos_flake.path(),
-        nixos_flake.system_attribute()
-    );
+    let flake_sys_attr = format!("{}#{}", nixos_flake.path(), nixos_flake.system_attribute());
 
     let mut cmd: Vec<&str> = vec![
         "nix",
