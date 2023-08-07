@@ -5,6 +5,7 @@ use serde_derive::Deserialize;
 
 use crate::cmd::*;
 use crate::error::*;
+use crate::flake::*;
 
 /// Locally available packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
@@ -18,7 +19,7 @@ pub(crate) struct Package {
 /// Returns list of all available packages in parsed form.
 pub(crate) fn get_packages(
     nixpkgs: &Option<String>,
-    nixos_flake: &str,
+    nixos_flake: &Flake,
 ) -> Result<BTreeSet<Package>, OldeError> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
@@ -49,7 +50,7 @@ pub(crate) fn get_packages(
                 "flakes",
                 "flake",
                 "archive",
-                nixos_flake,
+                nixos_flake.path().as_str(),
                 "--json",
             ]);
             // Assume simplest form:

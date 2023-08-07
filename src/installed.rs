@@ -5,6 +5,7 @@ use serde_derive::Deserialize;
 
 use crate::cmd::*;
 use crate::error::*;
+use crate::flake::*;
 
 /// Installed packages with available 'pname' and 'version' attributes.
 #[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
@@ -17,14 +18,12 @@ pub(crate) struct Package {
 
 fn get_local_system_derivation_via_flakes(
     nixpkgs: &Option<String>,
-    nixos_flake: &str,
+    nixos_flake: &Flake,
 ) -> Result<String, OldeError> {
     let flake_sys_attr = format!(
-        "{}#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
-        nixos_flake,
-        gethostname::gethostname()
-            .into_string()
-            .expect("valid hostname")
+        "{}#{}",
+        nixos_flake.path(),
+        nixos_flake.system_attribute()
     );
 
     let mut cmd: Vec<&str> = vec![
@@ -73,7 +72,7 @@ fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>) -> Result<Str
 /// all packages used to build it.
 fn get_local_system_derivation(
     nixpkgs: &Option<String>,
-    nixos_flake: &str,
+    nixos_flake: &Flake,
 ) -> Result<String, OldeError> {
     let mut errs = Vec::new();
 
@@ -97,7 +96,7 @@ fn get_local_system_derivation(
 // TODO: add parameters like system expression.
 pub(crate) fn get_packages(
     nixpkgs: &Option<String>,
-    nixos_flake: &str,
+    nixos_flake: &Flake,
 ) -> Result<BTreeSet<Package>, OldeError> {
     let drv_path = get_local_system_derivation(nixpkgs, nixos_flake)?;
     let drvs_u8 = run_cmd(&[

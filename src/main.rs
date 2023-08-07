@@ -1,6 +1,7 @@
 // TODO: can we move it out to Cargo.toml? Or a separate file?
 mod cmd;
 mod error;
+mod flake;
 mod opts;
 mod progress;
 
@@ -15,6 +16,7 @@ use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::error::*;
+use crate::flake::*;
 use crate::opts::*; // TODO: how to avoid explicit import?
 use crate::progress::*;
 
@@ -42,7 +44,8 @@ fn main() -> Result<(), OldeError> {
     //   /etc/nixos#foo or github:foo/bar#baz
     // should both produce full path to an attribute.
     // TODO: add support for more general flake syntax from `nix flake --help`.
-    let nixos_flake = resolve_flake(o.flake.unwrap_or("/etc/nixos".to_string()));
+    let resolved_path = resolve_flake(o.flake.unwrap_or("/etc/nixos".to_string()));
+    let nixos_flake = Flake::new(&resolved_path);
 
     let (r, i, a) = {
         let mut r: Result<BTreeSet<repology::Package>, OldeError> = Ok(BTreeSet::new());
