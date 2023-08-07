@@ -27,7 +27,10 @@ pub(crate) enum OldeError {
     IOError(std::io::Error),
 
     #[error("JSON parse error: {0}")]
-    JSONError(serde_json::Error)
+    JSONError(serde_json::Error),
+
+    #[error("UTF8 decoding error: {0}")]
+    UTF8Error(std::string::FromUtf8Error),
 }
 
 impl From<std::io::Error> for OldeError {
@@ -39,5 +42,11 @@ impl From<std::io::Error> for OldeError {
 impl From<serde_json::Error> for OldeError {
     fn from(error: serde_json::Error) -> Self {
         OldeError::JSONError(error)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for OldeError {
+    fn from(error: std::string::FromUtf8Error) -> Self {
+        OldeError::UTF8Error(error)
     }
 }

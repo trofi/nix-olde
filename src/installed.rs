@@ -46,7 +46,7 @@ fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>, nixos_flake:
         }
     }
     let out_u8 = run_cmd(&cmd)?;
-    Ok(String::from_utf8(out_u8).expect("utf8"))
+    Ok(String::from_utf8(out_u8)?)
 }
 
 fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>) -> Result<String, OldeError> {
@@ -63,7 +63,7 @@ fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>) -> Result<Str
     }
     let out_u8 = run_cmd(&cmd)?;
     // Returns path to derivation file (and a newline)
-    let out_s = String::from_utf8(out_u8).expect("utf8");
+    let out_s = String::from_utf8(out_u8)?;
     // Have to drop trailing newline.
     Ok(out_s.trim().to_string())
 }
