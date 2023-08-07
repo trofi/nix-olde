@@ -40,7 +40,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
             // input and explicitly pass it in. If it fails we just
             // leave things as is.
             //
-            let config_dir = fs::canonicalize(nixos_flake).expect(&format!("{} does not exist", nixos_flake));
+            let config_dir = fs::canonicalize(nixos_flake)?;
 
             let r = run_cmd(&[
                 "nix",

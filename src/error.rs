@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub(crate) enum OldeError {
     /// Running external command failed for some reason.
     #[error("command {cmd:?} failed: {output:?}")]
@@ -21,4 +21,14 @@ pub(crate) enum OldeError {
     // Unexpected empty output.
     #[error("unexpected empty output from {0}")]
     EmptyOutput(String),
+
+    // Any other error not worh a special status.
+    #[error("Error: {0}")]
+    IOError(std::io::Error),
+}
+
+impl From<std::io::Error> for OldeError {
+    fn from(error: std::io::Error) -> Self {
+        OldeError::IOError(error)
+    }
 }

@@ -17,7 +17,7 @@ pub(crate) struct Package {
 }
 
 fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<String, OldeError> {
-    let config_dir = fs::canonicalize(nixos_flake).expect(&format!("{} does not exist", nixos_flake));
+    let config_dir = fs::canonicalize(nixos_flake)?;
     let flake_sys_attr = format!(
         "{}#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
         config_dir.to_string_lossy(),
