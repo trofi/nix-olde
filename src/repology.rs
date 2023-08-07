@@ -63,8 +63,7 @@ pub(crate) fn get_packages(
             status: String,
         }
 
-        let pkgs: BTreeMap<String, Vec<Repology>> =
-            serde_json::from_slice(contents_u8.as_slice())?;
+        let pkgs: BTreeMap<String, Vec<Repology>> = serde_json::from_slice(contents_u8.as_slice())?;
 
         let mut next_suffix = suffix.clone();
         for (n, vs) in &pkgs {
@@ -95,7 +94,7 @@ pub(crate) fn get_packages(
                             String::from_utf8(contents_u8.clone())
                         );
                         continue;
-                    },
+                    }
                     Some(vn) => {
                         r.insert(Package {
                             repology_name: n.clone(),
@@ -104,7 +103,7 @@ pub(crate) fn get_packages(
                             status: v.status.clone(),
                             latest: latest.clone(),
                         });
-                    },
+                    }
                 }
             }
         }

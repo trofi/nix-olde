@@ -4,9 +4,7 @@ use crate::error::*;
 
 /// Runs 'cmd' and returns stdout or failure.
 pub(crate) fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
-    let output = Command::new(args[0])
-        .args(&args[1..])
-        .output()?;
+    let output = Command::new(args[0]).args(&args[1..]).output()?;
     log::debug!("Running {:?}: {:?}", args, output.status);
     log::trace!("Result of {:?}: {:?}", args, output);
 

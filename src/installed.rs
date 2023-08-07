@@ -16,7 +16,10 @@ pub(crate) struct Package {
     pub(crate) version: String,
 }
 
-fn get_local_system_derivation_via_flakes(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<String, OldeError> {
+fn get_local_system_derivation_via_flakes(
+    nixpkgs: &Option<String>,
+    nixos_flake: &str,
+) -> Result<String, OldeError> {
     let config_dir = fs::canonicalize(nixos_flake)?;
     let flake_sys_attr = format!(
         "{}#nixosConfigurations.{}.config.system.build.toplevel.drvPath",
@@ -70,7 +73,10 @@ fn get_local_system_derivation_via_nixos(nixpkgs: &Option<String>) -> Result<Str
 
 /// Returns store path for local system derivation to later extract
 /// all packages used to build it.
-fn get_local_system_derivation(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<String, OldeError> {
+fn get_local_system_derivation(
+    nixpkgs: &Option<String>,
+    nixos_flake: &str,
+) -> Result<String, OldeError> {
     let mut errs = Vec::new();
 
     // Is there a helper for that?
@@ -91,7 +97,10 @@ fn get_local_system_derivation(nixpkgs: &Option<String>, nixos_flake: &str) -> R
 
 /// Returns list of all used derivations in parsed form.
 // TODO: add parameters like system expression.
-pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<BTreeSet<Package>, OldeError> {
+pub(crate) fn get_packages(
+    nixpkgs: &Option<String>,
+    nixos_flake: &str,
+) -> Result<BTreeSet<Package>, OldeError> {
     let drv_path = get_local_system_derivation(nixpkgs, nixos_flake)?;
     let drvs_u8 = run_cmd(&[
         "nix",
@@ -120,8 +129,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
         env: DrvEnv,
     }
 
-    let drvs: BTreeMap<String, Installed> =
-        serde_json::from_slice(drvs_u8.as_slice())?;
+    let drvs: BTreeMap<String, Installed> = serde_json::from_slice(drvs_u8.as_slice())?;
 
     let r: BTreeSet<_> = drvs
         .iter()

@@ -1,5 +1,5 @@
 pub use clap::Parser;
-use clap_verbosity_flag::{Verbosity, InfoLevel};
+use clap_verbosity_flag::{InfoLevel, Verbosity};
 
 /// A tool to show outdated packages in current system according to
 /// repology.org database.

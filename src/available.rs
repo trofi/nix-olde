@@ -17,7 +17,10 @@ pub(crate) struct Package {
 }
 
 /// Returns list of all available packages in parsed form.
-pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Result<BTreeSet<Package>, OldeError> {
+pub(crate) fn get_packages(
+    nixpkgs: &Option<String>,
+    nixos_flake: &str,
+) -> Result<BTreeSet<Package>, OldeError> {
     // Actual command is taken from pkgs/top-level/make-tarball.nix for
     // 'packages.json.br' build. It's used by repology as is.
     let mut cmd: Vec<&str> = vec![
@@ -73,8 +76,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
                         inputs: BTreeMap<String, Input>,
                     }
 
-                    let prefetched: Archive =
-                        serde_json::from_slice(p_u8.as_slice())?;
+                    let prefetched: Archive = serde_json::from_slice(p_u8.as_slice())?;
 
                     // TODO: instead of using last in the list consider
                     // instantiating each of nixkogs inputs (and
@@ -115,8 +117,7 @@ pub(crate) fn get_packages(nixpkgs: &Option<String>, nixos_flake: &str) -> Resul
         version: String,
     }
 
-    let ps: BTreeMap<String, Available> =
-        serde_json::from_slice(ps_u8.as_slice())?;
+    let ps: BTreeMap<String, Available> = serde_json::from_slice(ps_u8.as_slice())?;
 
     let r: BTreeSet<_> = ps
         .iter()
