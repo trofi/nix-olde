@@ -20,20 +20,6 @@ use crate::flake::*;
 use crate::opts::*; // TODO: how to avoid explicit import?
 use crate::progress::*;
 
-/// Ideally we would just use flake path as is. In practice we have to
-/// dereference symlinks for local paths.
-/// TODO: move it's handling to `crate::flake`.
-fn resolve_flake(s: String) -> String {
-    match std::fs::canonicalize(s.clone()) {
-        Err(e) => {
-            log::info!("Failed to canonicalize path {s}. Assuming flake syntax.");
-            log::debug!("canonicalization failure for {s}: {e}");
-            s
-        }
-        Ok(r) => r.to_string_lossy().to_string(),
-    }
-}
-
 fn main() -> Result<(), OldeError> {
     let o = Opts::parse();
     env_logger::Builder::new()
@@ -41,12 +27,7 @@ fn main() -> Result<(), OldeError> {
         .filter_level(o.verbose.log_level_filter())
         .init();
 
-    // TODO: add support for attribute selection as well:
-    //   /etc/nixos#foo or github:foo/bar#baz
-    // should both produce full path to an attribute.
-    // TODO: add support for more general flake syntax from `nix flake --help`.
-    let resolved_path = resolve_flake(o.flake.unwrap_or("/etc/nixos".to_string()));
-    let nixos_flake = Flake::new(&resolved_path);
+    let nixos_flake = Flake::new(&o.flake);
 
     let (r, i, a) = {
         let mut r: Result<BTreeSet<repology::Package>, OldeError> = Ok(BTreeSet::new());
