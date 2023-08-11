@@ -10,7 +10,7 @@ pub(crate) struct Flake {
 
 /// Ideally we would just use flake path as is. In practice we have to
 /// dereference symlinks for local paths.
-fn resolve_flake(s: &str) -> String {
+pub(crate) fn resolve_flake(s: &str) -> String {
     match std::fs::canonicalize(s) {
         Err(e) => {
             log::info!("Failed to canonicalize path {s}. Assuming flake syntax.");

@@ -35,10 +35,12 @@ fn get_local_system_derivation_via_flakes(
         "--raw",
         &flake_sys_attr,
     ];
+    let resolved_nixpkgs: String;
     match nixpkgs {
         None => {}
         Some(p) => {
-            cmd.extend_from_slice(&["--override-input", "nixpkgs", p]);
+            resolved_nixpkgs = resolve_flake(p);
+            cmd.extend_from_slice(&["--override-input", "nixpkgs", &resolved_nixpkgs]);
         }
     }
     let out_u8 = run_cmd(&cmd)?;
