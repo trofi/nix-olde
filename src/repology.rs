@@ -42,13 +42,16 @@ pub(crate) fn get_packages(
         }
         let url =
             format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
+        // TODO: add an optional user identity string.
+        let user_agent = format!("{}/{} (+{})",
+            env!("CARGO_PKG_NAME"),
+            env!("CARGO_PKG_VERSION"),
+            "https://github.com/trofi/nix-olde");
 
         log::debug!("Fetching from repology: {:?}", suffix);
         let contents_u8 = run_cmd(&[
             "curl",
-            // TODO: add minimal version plumbing and optional user
-            // identity string.
-            "--user-agent", "https://github.com/trofi/nix-olde/",
+            "--user-agent", &user_agent,
             "--compressed",
             &url])?;
         // {
