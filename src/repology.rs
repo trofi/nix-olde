@@ -44,7 +44,13 @@ pub(crate) fn get_packages(
             format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
 
         log::debug!("Fetching from repology: {:?}", suffix);
-        let contents_u8 = run_cmd(&["curl", "--compressed", &url])?;
+        let contents_u8 = run_cmd(&[
+            "curl",
+            // TODO: add minimal version plumbing and optional user
+            // identity string.
+            "--user-agent", "https://github.com/trofi/nix-olde/",
+            "--compressed",
+            &url])?;
         // {
         //   "python:networkx": [
         //     {
