@@ -140,3 +140,25 @@ Currently used data sources are:
 
 `nix-olde` is distributed under
 [MIT license](https://opensource.org/licenses/MIT).
+
+# Frequent problems and workarounds
+
+## `nix-20.25` fails with `'/etc/nixos': ... is not owned by current user`
+
+This is known as [nix#10202](https://github.com/NixOS/nix/issues/10202)
+issue. `libgit2` does not allow opening repositories not owned by current
+user.
+
+As a workaround you can allow `/etc/nixos` just for your user as:
+
+```
+$ git config --global --add safe.directory /etc/nixos
+```
+
+This should add the following line to you `~/.gitconfig`:
+
+```
+[safe]
+        # workaround https://github.com/NixOS/nix/issues/10202
+        directory = /etc/nixos
+```
