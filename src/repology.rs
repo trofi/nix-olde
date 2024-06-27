@@ -15,9 +15,9 @@ pub(crate) struct Package {
     /// nixpkgs 'pname' from available packages
     pub(crate) name: String,
 
-    version: String,
+    version: Option<String>,
     /// repology's characterization of the state: outdated, dev-only, etc.
-    status: String,
+    status: Option<String>,
 
     /// latest version available in some other repository
     /// Might not exist if latest version was added and then
@@ -68,8 +68,8 @@ pub(crate) fn get_packages(
         struct Repology {
             repo: String,
             visiblename: Option<String>,
-            version: String,
-            status: String,
+            version: Option<String>,
+            status: Option<String>,
         }
 
         let pkgs: BTreeMap<String, Vec<Repology>> = serde_json::from_slice(contents_u8.as_slice())?;
@@ -79,13 +79,19 @@ pub(crate) fn get_packages(
             next_suffix = n.clone() + "/";
 
             let olatest_entry = vs.iter().find_map(|e| {
-                if e.status == "newest" || e.status == "unique" {
+                if e.status == Some("newest".to_string()) || e.status == Some("unique".to_string()) {
                     Some(e)
                 } else {
                     None
                 }
             });
-            let latest = olatest_entry.map(|e| e.version.clone());
+            let latest = match olatest_entry {
+                None => None,
+                Some (oe) => match &oe.version {
+                    None => None,
+                    Some(v) => Some(v.clone()),
+                },
+            };
 
             // There can be multiple nix_unstable package entries for a
             // single repology entry: pycropto vs pycryptodome.
