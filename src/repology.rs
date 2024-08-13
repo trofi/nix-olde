@@ -52,7 +52,6 @@ pub(crate) fn get_packages(
         let contents_u8 = run_cmd(&[
             "curl",
             "--user-agent", &user_agent,
-            "--compressed",
             &url])?;
         // {
         //   "python:networkx": [
