@@ -4,6 +4,8 @@ pub(crate) struct Flake {
     ///     /etc/nixos
     ///     github:user/nixos-config
     flake: String,
+    /// `nixosConfigurations` or `darwinConfigurations`
+    configurations_attribute: String,
     /// System name as an attribute in `nixosConfigurations`.
     name: String,
 }
@@ -41,12 +43,17 @@ impl Flake {
             Some(fln) => fln,
         };
 
+        let configurations_attribute = "nixosConfigurations";
+        #[cfg(target_os = "macos")]
+        let configurations_attribute = "darwinConfigurations";
+
         Flake {
             // TODO: try to resolve symlinks for paths in flake syntax
             // like 'git+file:///etc/nixos' (if `nixos-rebuild` supports
             // it).
             flake: resolve_flake(flake),
             name: name.to_string(),
+            configurations_attribute: configurations_attribute.to_string()
         }
     }
 
@@ -61,7 +68,8 @@ impl Flake {
     /// TODO: not implemented yet. Just returns current system.
     pub(crate) fn system_attribute(self: &Self) -> String {
         format!(
-            "nixosConfigurations.{}.config.system.build.toplevel.drvPath",
+            "{}.{}.config.system.build.toplevel.drvPath",
+            self.configurations_attribute,
             self.name
         )
     }
