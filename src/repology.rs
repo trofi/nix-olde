@@ -86,10 +86,7 @@ pub(crate) fn get_packages(
             });
             let latest = match olatest_entry {
                 None => None,
-                Some (oe) => match &oe.version {
-                    None => None,
-                    Some(v) => Some(v.clone()),
-                },
+                Some (oe) => oe.version.clone(),
             };
 
             // There can be multiple nix_unstable package entries for a
