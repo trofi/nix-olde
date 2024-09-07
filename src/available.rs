@@ -117,13 +117,13 @@ pub(crate) fn get_packages(
 
     let r: BTreeSet<_> = ps
         .iter()
-        .filter_map(|(attr, a)| {
-            Some(Package {
+        .map(|(attr, a)| {
+            Package {
                 attribute: attr.clone(),
                 name: a.name.clone(),
                 pname: a.pname.clone(),
                 version: a.version.clone(),
-            })
+            }
         })
         .collect();
 
