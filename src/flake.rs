@@ -39,7 +39,7 @@ impl Flake {
 
         let flake_uri = s.as_deref().unwrap_or("/etc/nixos");
         let (flake, name): (&str, &str) = match flake_uri.split_once('#') {
-            None => (&flake_uri, &hostname),
+            None => (flake_uri, &hostname),
             Some(fln) => fln,
         };
 
@@ -60,13 +60,13 @@ impl Flake {
     /// The path part of original flake.
     /// Example: for flake /etc/nixos#vm it should be a /etc/nixos.
     /// TODO: not implemented yet. Just returns original argument.
-    pub(crate) fn path(self: &Self) -> String {
+    pub(crate) fn path(&self) -> String {
         self.flake.to_string()
     }
 
     /// The attribute of requested system within the flake.
     /// TODO: not implemented yet. Just returns current system.
-    pub(crate) fn system_attribute(self: &Self) -> String {
+    pub(crate) fn system_attribute(&self) -> String {
         format!(
             "{}.{}.config.system.build.toplevel.drvPath",
             self.configurations_attribute,
