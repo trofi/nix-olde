@@ -15,6 +15,8 @@ use std::collections::BTreeSet;
 use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use serde_json::json;
+
 use crate::error::*;
 use crate::flake::*;
 use crate::opts::*; // TODO: how to avoid explicit import?
@@ -154,13 +156,14 @@ fn main() -> Result<(), OldeError> {
                 continue;
             }
         }
-        println!(
-            "repology {} {:?} | nixpkgs {:?} {:?}",
-            rn,
-            (*olv).clone().unwrap_or("<none>".to_string()),
-            vs,
-            ats
-        );
+
+        let outdated_package = json!({
+            "repology_name": rn,
+            "attribute": ats,
+            "repology_version": (*olv).clone().unwrap_or("<none>".to_string()),
+            "nixpkgs_version": vs,
+        });
+        println!("{}", outdated_package.to_string());
         found_outdated += 1;
     }
 
