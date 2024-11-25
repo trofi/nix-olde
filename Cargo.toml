@@ -10,7 +10,7 @@ license = "MIT"
 # cargo upgrade --incompatible
 [dependencies]
 clap = { version = "4", features = ["derive"] }
-clap-verbosity-flag = "2"
+clap-verbosity-flag = "3"
 env_logger = { version = "0", features = [] }
 gethostname = "0"
 log = { version = "0", features = [] }
