@@ -12,7 +12,7 @@ license = "MIT"
 clap = { version = "4", features = ["derive"] }
 clap-verbosity-flag = "3"
 env_logger = { version = "0", features = [] }
-gethostname = "0"
+gethostname = "1"
 log = { version = "0", features = [] }
 serde = "1"
 serde_derive = "1"
