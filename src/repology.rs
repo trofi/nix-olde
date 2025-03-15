@@ -51,7 +51,14 @@ pub(crate) fn get_packages(
         );
 
         log::debug!("Fetching from repology: {:?}", suffix);
-        let contents_u8 = run_cmd(&["curl", "--user-agent", &user_agent, &url])?;
+        let contents_u8 = run_cmd(&[
+            "curl",
+            // Don't write to stderr things that are not problems.
+            "--no-progress-meter",
+            "--user-agent",
+            &user_agent,
+            &url,
+        ])?;
         // {
         //   "python:networkx": [
         //     {
