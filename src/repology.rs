@@ -43,16 +43,15 @@ pub(crate) fn get_packages(
         let url =
             format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
         // TODO: add an optional user identity string.
-        let user_agent = format!("{}/{} (+{})",
+        let user_agent = format!(
+            "{}/{} (+{})",
             env!("CARGO_PKG_NAME"),
             env!("CARGO_PKG_VERSION"),
-            "https://github.com/trofi/nix-olde");
+            "https://github.com/trofi/nix-olde"
+        );
 
         log::debug!("Fetching from repology: {:?}", suffix);
-        let contents_u8 = run_cmd(&[
-            "curl",
-            "--user-agent", &user_agent,
-            &url])?;
+        let contents_u8 = run_cmd(&["curl", "--user-agent", &user_agent, &url])?;
         // {
         //   "python:networkx": [
         //     {
@@ -78,7 +77,8 @@ pub(crate) fn get_packages(
             next_suffix = n.clone() + "/";
 
             let olatest_entry = vs.iter().find_map(|e| {
-                if e.status == Some("newest".to_string()) || e.status == Some("unique".to_string()) {
+                if e.status == Some("newest".to_string()) || e.status == Some("unique".to_string())
+                {
                     Some(e)
                 } else {
                     None
@@ -86,7 +86,7 @@ pub(crate) fn get_packages(
             });
             let latest = match olatest_entry {
                 None => None,
-                Some (oe) => oe.version.clone(),
+                Some(oe) => oe.version.clone(),
             };
 
             // There can be multiple nix_unstable package entries for a

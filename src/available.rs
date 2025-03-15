@@ -117,13 +117,11 @@ pub(crate) fn get_packages(
 
     let r: BTreeSet<_> = ps
         .iter()
-        .map(|(attr, a)| {
-            Package {
-                attribute: attr.clone(),
-                name: a.name.clone(),
-                pname: a.pname.clone(),
-                version: a.version.clone(),
-            }
+        .map(|(attr, a)| Package {
+            attribute: attr.clone(),
+            name: a.name.clone(),
+            pname: a.pname.clone(),
+            version: a.version.clone(),
         })
         .collect();
 

@@ -53,7 +53,7 @@ impl Flake {
             // it).
             flake: resolve_flake(flake),
             name: name.to_string(),
-            configurations_attribute: configurations_attribute.to_string()
+            configurations_attribute: configurations_attribute.to_string(),
         }
     }
 
@@ -69,8 +69,7 @@ impl Flake {
     pub(crate) fn system_attribute(&self) -> String {
         format!(
             "{}.{}.config.system.build.toplevel.drvPath",
-            self.configurations_attribute,
-            self.name
+            self.configurations_attribute, self.name
         )
     }
 }
