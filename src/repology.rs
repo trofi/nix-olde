@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
+use std::time::{Duration,Instant};
 
 use serde_derive::Deserialize;
 
@@ -36,10 +37,30 @@ pub(crate) fn get_packages(
     //     https://repology.org/api/v1/projects/${suffix}?inrepo=nix_unstable&outdated=1
     let mut suffix: String = "".to_string();
 
+    // repology.org imposes a limit of 1 fetch per second:
+    //     https://repology.org/api/v1
+    // We keep here the time we are allowed to fetch next batch.
+    let min_fetch_interval = Duration::from_secs(1);
+    let mut next_fetch_time = Instant::now();
+
     loop {
         if cancel_fetch() {
             return Err(OldeError::Canceled(String::from("Repology fetch")));
         }
+
+        // implement trivial throttling
+        let now = Instant::now();
+        if now.lt(&next_fetch_time)
+        {
+            // TODO: when encountered with a transient failure it might
+            // be worthwile increasing the delay here and retry.
+            // TODO: randomize the delay slightly to spread the delay
+            // between multiple possible clients.
+            let delay = next_fetch_time - now;
+            log::debug!("Waith for {delay:?} before next fetch");
+            std::thread::sleep(delay);
+        }
+
         let url =
             format!("https://repology.org/api/v1/projects/{suffix}?inrepo=nix_unstable&outdated=1");
         // TODO: add an optional user identity string.
@@ -62,6 +83,11 @@ pub(crate) fn get_packages(
             &user_agent,
             &url,
         ])?;
+
+        // Make sure we allow at least min_fetch_interval between previous
+        // `curl` finish and next `curl` start.
+        next_fetch_time = Instant::now() + min_fetch_interval;
+
         // {
         //   "python:networkx": [
         //     {
