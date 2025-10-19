@@ -57,7 +57,7 @@ pub(crate) fn get_packages(
             // TODO: randomize the delay slightly to spread the delay
             // between multiple possible clients.
             let delay = next_fetch_time - now;
-            log::debug!("Waith for {delay:?} before next fetch");
+            log::debug!("Wait for {delay:?} before next fetch");
             std::thread::sleep(delay);
         }
 
