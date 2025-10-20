@@ -1,3 +1,6 @@
+#[cfg(target_os = "macos")]
+use crate::cmd::*;
+
 /// Flake attribute used to construct system
 pub(crate) struct Flake {
     /// Path to a flake (without an attribute). Examples are:
@@ -36,6 +39,15 @@ impl Flake {
         let hostname = gethostname::gethostname()
             .into_string()
             .expect("hostname decoding failure");
+        // Follow `nix-darwin` in hostname extraction:
+        //   https://github.com/nix-darwin/nix-darwin/blob/c3211fcd0c56c11ff110d346d4487b18f7365168/pkgs/nix-tools/darwin-rebuild.sh#L170
+        #[cfg(target_os = "macos")]
+        let hostname = {
+            let out_u8 =
+                run_cmd(&["scutil", "--get", "LocalHostName"]).expect("failed to get hostname");
+            let out = String::from_utf8(out_u8).expect("expected valid UTF-8 hostname");
+            out.trim().to_string()
+        };
 
         let flake_uri = s.as_deref().unwrap_or("/etc/nixos");
         #[cfg(target_os = "macos")]
