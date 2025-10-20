@@ -8,7 +8,7 @@ pub(crate) fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
 
     if !output.status.success() {
         // Be verbose about all command run failures.
-        log::info!("Failed running {:?}: {:?}", args, output.status);
+        log::info!("Failed to run {:?}: {:?}", args, output.status);
         for l in output
             .stdout
             .split(|c| *c == b'\n')
@@ -28,7 +28,7 @@ pub(crate) fn run_cmd(args: &[&str]) -> Result<Vec<u8>, OldeError> {
             output,
         });
     } else {
-        log::debug!("Running {:?}: {:?}", args, output.status);
+        log::debug!("Ran {:?}: {:?}", args, output.status);
         for l in output
             .stdout
             .split(|c| *c == b'\n')
