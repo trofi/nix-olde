@@ -76,7 +76,7 @@ pub(crate) fn get_packages(
             "curl",
             // Don't write to stderr things that are not problems.
             "--no-progress-meter",
-            // Fail `curl` colland when server returns errors like
+            // Fail `curl` command when server returns errors like
             // throttling (429).
             "--fail-with-body",
             "--user-agent",
