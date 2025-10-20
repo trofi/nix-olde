@@ -1,7 +1,7 @@
 /// Flake attribute used to construct system
 pub(crate) struct Flake {
     /// Path to a flake (without an attribute). Examples are:
-    ///     /etc/nixos
+    ///     /etc/nixos (or /etc/nix-darwin on macos)
     ///     github:user/nixos-config
     flake: String,
     /// `nixosConfigurations` or `darwinConfigurations`
@@ -38,6 +38,8 @@ impl Flake {
             .expect("hostname decoding failure");
 
         let flake_uri = s.as_deref().unwrap_or("/etc/nixos");
+        #[cfg(target_os = "macos")]
+        let flake_uri = s.as_deref().unwrap_or("/etc/nix-darwin");
         let (flake, name): (&str, &str) = match flake_uri.split_once('#') {
             None => (flake_uri, &hostname),
             Some(fln) => fln,
