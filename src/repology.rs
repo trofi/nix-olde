@@ -79,6 +79,10 @@ pub(crate) fn get_packages(
             // Fail `curl` command when server returns errors like
             // throttling (429).
             "--fail-with-body",
+            // json is good to compress: usually a 3x improovement
+            // on large responses. It also happens to fetch faster
+            // on slow connections.
+            "--compressed",
             "--user-agent",
             &user_agent,
             &url,
