@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
-use std::time::{Duration,Instant};
+use std::time::{Duration, Instant};
 
 use serde_derive::Deserialize;
 
@@ -50,8 +50,7 @@ pub(crate) fn get_packages(
 
         // implement trivial throttling
         let now = Instant::now();
-        if now.lt(&next_fetch_time)
-        {
+        if now.lt(&next_fetch_time) {
             // TODO: when encountered with a transient failure it might
             // be worthwile increasing the delay here and retry.
             // TODO: randomize the delay slightly to spread the delay
