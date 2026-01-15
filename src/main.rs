@@ -48,7 +48,7 @@ fn main() -> Result<(), OldeError> {
         std::thread::scope(|s| {
             s.spawn(|| {
                 let mut p = TaskProgress::new("repology");
-                r = repology::get_packages(&poll_cancel);
+                r = repology::get_packages(&o.repology_repo, &poll_cancel);
                 if r.is_err() {
                     cancel();
                     p.fail();

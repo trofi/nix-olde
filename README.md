@@ -93,11 +93,13 @@ A tool to show outdated packages in current system according to repology.org dat
 Usage: nix-olde [OPTIONS]
 
 Options:
-  -n, --nixpkgs <NIXPKGS>  Alternative path to <nixpkgs> location
-  -v, --verbose            Enable extra verbosity to report unexpected events, fetch progress and so on
-  -f, --flake <FLAKE>      Pass a system flake alternative to /etc/nixos default
-  -h, --help               Print help
-  -V, --version            Print version
+  -n, --nixpkgs <NIXPKGS>              Alternative path to <nixpkgs> location
+  -v, --verbose...                     Increase logging verbosity
+  -q, --quiet...                       Decrease logging verbosity
+  -f, --flake <FLAKE>                  Pass a system flake alternative to /etc/nixos default
+  -r, --repology-repo <REPOLOGY_REPO>  Pass a repository to pull current versions from. Possible values are all "nixpkgs" flavours at https://repology.org/repositories/statistics [default: nix_unstable]
+  -h, --help                           Print help
+  -V, --version                        Print version
 ```
 
 `--nixpkgs` / `-n` is most useful when you are looking for packages that
@@ -106,6 +108,9 @@ repository (usually `staging` or `master`).
 
 `--flake` / `-f` is useful for evaluation of system different from the
 default.
+
+`-r` / `--repology-repo` is useful when one needs to check a different
+release branch of `nixpkgs`.
 
 # How `nix-olde` works
 

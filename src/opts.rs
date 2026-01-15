@@ -18,4 +18,10 @@ pub(crate) struct Opts {
     /// Pass a system flake alternative to /etc/nixos default.
     #[arg(short, long)]
     pub(crate) flake: Option<String>,
+
+    /// Pass a repository to pull current versions from.
+    /// Possible values are all "nixpkgs" flavours at
+    /// https://repology.org/repositories/statistics.
+    #[arg(short, long, default_value = "nix_unstable")]
+    pub(crate) repology_repo: String,
 }
