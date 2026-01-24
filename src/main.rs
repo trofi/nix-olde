@@ -104,7 +104,7 @@ fn main() -> Result<(), OldeError> {
     let mut known_versions: BTreeMap<&str, (&Option<String>, BTreeSet<&str>, BTreeSet<&str>)> =
         BTreeMap::new();
 
-    // Map installed => available => repology. Sometimes mapping is
+    // Map installed "name" => available "attr" => repology "repology name". Sometimes mapping is
     // one-to-many.
     for lp in &installed_ps {
         let mut found_in_available = false;
@@ -117,7 +117,7 @@ fn main() -> Result<(), OldeError> {
 
             let mut found_on_repology = false;
             for rp in &repology_ps {
-                if ap.pname != rp.name {
+                if ap.attribute != rp.nixpkgs_attribute {
                     continue;
                 }
                 found_on_repology = true;
@@ -138,7 +138,7 @@ fn main() -> Result<(), OldeError> {
                 }
             }
             if !found_on_repology {
-                missing_repology.push((&ap.pname, &lp.name));
+                missing_repology.push((&ap.attribute, &lp.name));
             }
         }
         if !found_in_available {

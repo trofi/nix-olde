@@ -127,19 +127,18 @@ Currently used data sources are:
   * `version` (example: `2.8.6`)
 - available packages: uses `nix-env -qa --json` tool, memory hungry.
   Provides fields:
-  * [keyed from installed packages] `name` (example: `python3.10-networkx-2.8.6`)
-  * `attribute`: `nixpkgs` attribute path (example: `nixos.python310Packages.networkx`)
-  * `pname`: `name` with `version` component dropped (example: `nixos.python310Packages.networkx`)
+  * [keyed from `installed` packages] `name` (example: `python3.10-networkx-2.8.6`)
+  * `attribute`: `nixpkgs` attribute path (example: `python310Packages.networkx`)
+  * `pname`: `name` with `version` component dropped (example: `python3.10-networkx`)
   * `version` (example: `2.8.6`)
 - <https://repology.org/> `json` database: uses
   `https://repology.org/api/v1/projects/` `HTTP` endpoint. Provides
   fields:
   * `repo`: package repository (example: "nix_unstable")
-  * [keyed from available] `name`: with `version` component
-    dropped (example: `nixos.python310Packages.networkx`).
+  * [keyed from `available` packages] `nixpkgs_attribute` (example: `python310Packages.networkx`).
   * `version` (example: `2.8.6`)
   * `status`: package status in repository (examples: "newest",
-    "outdared").
+    "outdated").
 
 # License
 

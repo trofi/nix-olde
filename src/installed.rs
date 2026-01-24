@@ -106,12 +106,15 @@ pub(crate) fn get_packages(
         &drv_path,
     ])?;
     // {
-    //   "/nix/store/...-python3.10-networkx-2.8.6.drv": {
+    //   "wcgzncgyb0s4fah9shvxg5x2m956m2xy-ocaml5.3.0-patch-3.0.0.drv": {
     //     "env": {
-    //       "name": "python3.10-networkx-2.8.6",
-    //       "pname": "networkx",
-    //       "version": "2.8.6"
+    //       "name": "ocaml5.3.0-patch-3.0.0",
+    //       "pname": "patch",
+    //       "version": "3.0.0"
     //       ...
+    //     }
+    //     "name": "ocaml5.3.0-patch-3.0.0",
+    //     ...
 
     #[derive(Deserialize, Debug)]
     struct DrvEnv {

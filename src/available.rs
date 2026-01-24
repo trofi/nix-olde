@@ -100,10 +100,10 @@ pub(crate) fn get_packages(
         }
     }
     let ps_u8 = run_cmd(&cmd)?;
-    // "nixos.python310Packages.networkx": {
-    //   "name": "python3.10-networkx-2.8.6",
-    //   "pname": "python3.10-networkx",
-    //   "version": "2.8.6"
+    // "ocamlPackages.patch": {
+    //   "name": "ocaml5.3.0-patch-3.0.0",
+    //   "pname": "ocaml5.3.0-patch",
+    //   "version": "3.0.0"
     // },
 
     #[derive(Deserialize, Debug)]

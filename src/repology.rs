@@ -13,8 +13,8 @@ pub(crate) struct Package {
     /// repology package name
     pub(crate) repology_name: String,
 
-    /// nixpkgs 'pname' from available packages
-    pub(crate) name: String,
+    /// nixpkgs attribute name
+    pub(crate) nixpkgs_attribute: String,
 
     version: Option<String>,
     /// repology's characterization of the state: outdated, dev-only, etc.
@@ -94,19 +94,24 @@ pub(crate) fn get_packages(
         next_fetch_time = Instant::now() + min_fetch_interval;
 
         // {
-        //   "python:networkx": [
+        //   "ocaml:patch": [
         //     {
-        //       "repo": "{repology_repo}",
-        //       "visiblenamename": "python3.10-networkx",
-        //       "version": "2.8.6",
-        //       "status": "outdated",
-        //     },
+        //        "repo": "{repology_repo}",
+        //        "srcname": "ocamlPackages.patch",
+        //        "visiblename": "patch",
+        //        "version": "3.0.0",
+        //        "origversion": null,
+        //        "status": "outdated",
+        //        "categories": [
+        //          "ocamlPackages"
+        //        ]
+        //      },
 
         #[derive(Deserialize, Debug)]
         /// Dervivation description with subset of fields needed to detect outdated packages.
         struct Repology {
             repo: String,
-            visiblename: Option<String>,
+            srcname: Option<String>,
             version: Option<String>,
             status: Option<String>,
         }
@@ -138,19 +143,19 @@ pub(crate) fn get_packages(
                     continue;
                 }
 
-                match &v.visiblename {
+                match &v.srcname {
                     None => {
-                        eprintln!("Skipping an entry without 'name' attribyte: {v:?}");
+                        eprintln!("Skipping an entry without 'srcname' attribute: {v:?}");
                         log::debug!(
                             "JSON for entry: {:?}",
                             String::from_utf8(contents_u8.clone())
                         );
                         continue;
                     }
-                    Some(vn) => {
+                    Some(sn) => {
                         r.insert(Package {
                             repology_name: n.clone(),
-                            name: vn.clone(),
+                            nixpkgs_attribute: sn.clone(),
                             version: v.version.clone(),
                             status: v.status.clone(),
                             latest: latest.clone(),
