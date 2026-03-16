@@ -131,7 +131,7 @@ fn main() -> Result<(), OldeError> {
                         ats.insert(&ap.attribute);
                         known_versions.insert(&rp.repology_name, (&rp.latest, vs, ats));
                     }
-                    Some((_, ref mut vs, ref mut ats)) => {
+                    Some((_, vs, ats)) => {
                         vs.insert(&lp.version);
                         ats.insert(&ap.attribute);
                     }
