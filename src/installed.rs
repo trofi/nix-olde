@@ -124,7 +124,7 @@ pub(crate) fn get_packages(
     #[derive(Deserialize, Debug)]
     /// Dervivation description with subset of fields needed to detect outdated packages.
     struct Installed {
-        env: DrvEnv,
+        env: Option<DrvEnv>,
     }
 
     let drvs: BTreeMap<String, Installed> = serde_json::from_slice(drvs_u8.as_slice())?;
@@ -132,10 +132,10 @@ pub(crate) fn get_packages(
     let r: BTreeSet<_> = drvs
         .iter()
         .filter_map(|(_drv, oenv)| match &oenv.env {
-            DrvEnv {
+            Some(DrvEnv {
                 name: Some(n),
                 version: Some(ver),
-            } => Some(Package {
+            }) => Some(Package {
                 name: n.clone(),
                 version: ver.clone(),
             }),
