@@ -106,15 +106,18 @@ pub(crate) fn get_packages(
         &drv_path,
     ])?;
     // {
-    //   "wcgzncgyb0s4fah9shvxg5x2m956m2xy-ocaml5.3.0-patch-3.0.0.drv": {
-    //     "env": {
+    //   "derivations": {
+    //     "wcgzncgyb0s4fah9shvxg5x2m956m2xy-ocaml5.3.0-patch-3.0.0.drv": {
+    //       "env": {
+    //         "name": "ocaml5.3.0-patch-3.0.0",
+    //         "pname": "patch",
+    //         "version": "3.0.0"
+    //         ...
+    //       }
     //       "name": "ocaml5.3.0-patch-3.0.0",
-    //       "pname": "patch",
-    //       "version": "3.0.0"
     //       ...
-    //     }
-    //     "name": "ocaml5.3.0-patch-3.0.0",
-    //     ...
+    //   "version": 4,
+    // }
 
     #[derive(Deserialize, Debug)]
     struct DrvEnv {
@@ -123,13 +126,17 @@ pub(crate) fn get_packages(
     }
     #[derive(Deserialize, Debug)]
     /// Dervivation description with subset of fields needed to detect outdated packages.
-    struct Installed {
+    struct InstalledDrv {
         env: DrvEnv,
     }
+    #[derive(Deserialize, Debug)]
+    struct Installed {
+        derivations: BTreeMap<String, InstalledDrv>,
+    }
 
-    let drvs: BTreeMap<String, Installed> = serde_json::from_slice(drvs_u8.as_slice())?;
+    let drvs: Installed = serde_json::from_slice(drvs_u8.as_slice())?;
 
-    let r: BTreeSet<_> = drvs
+    let r: BTreeSet<_> = drvs.derivations
         .iter()
         .filter_map(|(_drv, oenv)| match &oenv.env {
             DrvEnv {
