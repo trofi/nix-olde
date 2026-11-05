@@ -65,7 +65,7 @@ pub(crate) fn get_packages(
                 Ok(p_u8) => {
                     #[derive(Deserialize, Debug)]
                     struct Input {
-                        path: String,
+                        path: Option<String>,
                     }
                     #[derive(Deserialize, Debug)]
                     struct Archive {
@@ -78,10 +78,14 @@ pub(crate) fn get_packages(
                     // instantiating each of nixkogs inputs (and
                     // recurse into inputs' inputs). That way we should
                     // be able to match all possible packages.
-                    for (iname, i) in prefetched.inputs {
-                        if iname == "nixpkgs" {
-                            a = i.path
-                        }
+                    if let Some(path) = prefetched
+                        .inputs
+                        .into_iter()
+                        .filter(|(iname, _i)| iname == "nixpkgs")
+                        .filter_map(|(_iname, i)| i.path)
+                        .next()
+                    {
+                        a = path
                     }
 
                     if !a.is_empty() {
